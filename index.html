@@ -934,12 +934,12 @@
                         <span class="balance-value" id="balanceDisplay">1,000,000,000</span>
                     </div>
                     <div class="bet-amount">
-                        <input type="number" id="betAmount" placeholder="Số tiền" min="10" value="100" disabled>
+                        <input type="number" id="betAmount" placeholder="Số tiền" min="10" value="100">
                         <div class="bet-presets">
-                            <button data-amount="50" disabled>50</button>
-                            <button data-amount="100" disabled>100</button>
-                            <button data-amount="500" disabled>500</button>
-                            <button data-amount="1000" disabled>1K</button>
+                            <button data-amount="50">50</button>
+                            <button data-amount="100">100</button>
+                            <button data-amount="500">500</button>
+                            <button data-amount="1000">1K</button>
                         </div>
                     </div>
                     <div class="bet-actions">
@@ -954,7 +954,7 @@
                     <h4>🏆 TIỀN THƯỞNG</h4>
                     <div class="reward-input-group">
                         <span class="reward-label">💰</span>
-                        <input type="number" id="rewardAmount" placeholder="Nhập tiền thưởng..." min="0" value="500" disabled>
+                        <input type="number" id="rewardAmount" placeholder="Nhập tiền thưởng..." min="0" value="500">
                         <span class="reward-label">đ</span>
                     </div>
                     <div class="reward-display">🎯 Thưởng: <span id="rewardValue">500</span>đ khi sống sót 5 lượt</div>
@@ -967,8 +967,8 @@
                     </div>
                     <div class="chat-messages" id="chatMessages"></div>
                     <div class="chat-input">
-                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." maxlength="100" disabled>
-                        <button id="sendBtn" disabled>Gửi</button>
+                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." maxlength="100">
+                        <button id="sendBtn">Gửi</button>
                     </div>
                 </div>
             </div>
@@ -1768,6 +1768,8 @@
                 loginBtn.style.display = 'none';
                 userName.textContent = user.displayName || user.email || 'User';
                 userAvatar.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
+                
+                // BẬT CHAT KHI ĐÃ ĐĂNG NHẬP
                 chatInput.disabled = false;
                 sendBtn.disabled = false;
                 chatInput.placeholder = 'Nhập tin nhắn...';
@@ -1878,14 +1880,18 @@
         `;
         document.head.appendChild(style);
 
-        // Gắn sự kiện gửi tin nhắn
-        sendBtn.addEventListener('click', sendChatMessage);
-        chatInput.addEventListener('keypress', (e) => {
+        // Gắn sự kiện gửi tin nhắn - DÙNG onclick thay vì addEventListener
+        sendBtn.onclick = function(e) {
+            e.preventDefault();
+            sendChatMessage();
+        };
+        
+        chatInput.onkeypress = function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 sendChatMessage();
             }
-        });
+        };
 
         // ============================================================
         // 7. BETTING
