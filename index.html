@@ -468,7 +468,23 @@
             0% { opacity: 0.8; }
             100% { opacity: 0; }
         }
+        /* ==== ẢNH NỀN BÊN TRONG Ô ==== */
+.chamber .chamber-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.5;
+    pointer-events: none;
+    border-radius: 50%;
+}
+.chamber .chamber-bg.active {
+    opacity: 0.8;
+}
     </style>
+    
 </head>
 <body>
     <!-- Gun Animation Overlay -->
@@ -1147,65 +1163,68 @@
             }, 200);
         }
 
-        // ====== UI FUNCTIONS ======
-        function renderCylinder() {
-            var cylinder = document.getElementById('cylinder');
-            if (!cylinder) return;
-            cylinder.innerHTML = '';
-            var icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
+function renderCylinder() {
+    var cylinder = document.getElementById('cylinder');
+    if (!cylinder) return;
+    cylinder.innerHTML = '';
 
-            for (var i = 0; i < 6; i++) {
-                var chamber = document.createElement('div');
-                chamber.className = 'chamber';
-                chamber.dataset.index = i;
+    for (var i = 0; i < 6; i++) {
+        var chamber = document.createElement('div');
+        chamber.className = 'chamber';
+        chamber.dataset.index = i;
 
-                if (gameState.gameOver && i === gameState.bulletPosition && gameState.removedChambers.indexOf(i) === -1) {
-                    var dot = document.createElement('div');
-                    dot.className = 'bullet-dot';
-                    chamber.appendChild(dot);
-                } else if (gameState.removedChambers.indexOf(i) === -1) {
-                    var icon = document.createElement('div');
-                    icon.className = 'chamber-icon';
-                    icon.textContent = icons[i];
-                    chamber.appendChild(icon);
-                    var emptyDot = document.createElement('div');
-                    emptyDot.className = 'empty-dot';
-                    chamber.appendChild(emptyDot);
-                }
+        // ====== THÊM ẢNH NỀN a.png ======
+        var img = document.createElement('img');
+        img.src = 'a.png';
+        img.className = 'chamber-bg';
+        img.alt = 'súng';
+        img.onerror = function() { this.style.display = 'none'; };
+        chamber.appendChild(img);
 
-                var number = document.createElement('div');
-                number.className = 'chamber-number';
-                number.textContent = i + 1;
-                chamber.appendChild(number);
-
-                if (gameState.removedChambers.indexOf(i) === -1) {
-                    var hint = document.createElement('div');
-                    hint.className = 'click-hint';
-                    hint.textContent = '👆 Chọn';
-                    chamber.appendChild(hint);
-                }
-
-                if (gameState.selectedChamber === i && !gameState.gameOver && gameState.removedChambers.indexOf(i) === -1) {
-                    chamber.classList.add('selected');
-                }
-
-                if (gameState.gameOver || gameState.turn >= gameState.maxTurns || gameState.removedChambers.indexOf(i) !== -1) {
-                    chamber.classList.add('disabled');
-                }
-
-                if (!isHost) {
-                    chamber.style.cursor = 'not-allowed';
-                }
-
-                chamber.addEventListener('click', (function(idx) {
-                    return function() {
-                        selectChamber(idx);
-                    };
-                })(i));
-
-                cylinder.appendChild(chamber);
-            }
+        // Hiển thị đạn khi game over (ghi đè lên ảnh)
+        if (gameState.gameOver && i === gameState.bulletPosition && gameState.removedChambers.indexOf(i) === -1) {
+            var dot = document.createElement('div');
+            dot.className = 'bullet-dot';
+            chamber.appendChild(dot);
+            img.style.opacity = '0.2'; // Làm mờ ảnh khi có đạn
         }
+
+        // Số thứ tự (luôn hiển thị)
+        var number = document.createElement('div');
+        number.className = 'chamber-number';
+        number.textContent = i + 1;
+        chamber.appendChild(number);
+
+        // Hint "👆 Chọn" khi ô còn sống
+        if (gameState.removedChambers.indexOf(i) === -1) {
+            var hint = document.createElement('div');
+            hint.className = 'click-hint';
+            hint.textContent = '👆 Chọn';
+            chamber.appendChild(hint);
+        }
+
+        // Highlight khi được chọn
+        if (gameState.selectedChamber === i && !gameState.gameOver && gameState.removedChambers.indexOf(i) === -1) {
+            chamber.classList.add('selected');
+            img.classList.add('active'); // Làm sáng ảnh khi chọn
+        }
+
+        // Disabled
+        if (gameState.gameOver || gameState.turn >= gameState.maxTurns || gameState.removedChambers.indexOf(i) !== -1) {
+            chamber.classList.add('disabled');
+        }
+
+        if (!isHost) {
+            chamber.style.cursor = 'not-allowed';
+        }
+
+        chamber.addEventListener('click', (function(idx) {
+            return function() { selectChamber(idx); };
+        })(i));
+
+        cylinder.appendChild(chamber);
+    }
+}
 
         function updateUI() {
             document.getElementById('turnDisplay').textContent = gameState.turn + '/' + gameState.maxTurns;
