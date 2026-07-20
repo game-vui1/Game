@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Russian Roulette · Đồng bộ đa người xem</title>
+    <title>Russian Roulette · Đồng bộ REAL</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -19,31 +20,11 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 30% 50%, rgba(255, 107, 107, 0.07) 0%, transparent 60%),
-                        radial-gradient(ellipse at 70% 50%, rgba(102, 126, 234, 0.07) 0%, transparent 60%);
-            z-index: 0;
-            animation: backgroundMove 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes backgroundMove {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            100% { transform: translate(2%, 2%) rotate(3deg); }
+            overflow-x: hidden;
         }
 
         .container {
-            position: relative;
-            z-index: 1;
-            background: rgba(20, 20, 40, 0.8);
+            background: rgba(20, 20, 40, 0.85);
             backdrop-filter: blur(16px);
             border-radius: 40px;
             padding: 35px;
@@ -53,7 +34,6 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Header */
         .header {
             display: flex;
             align-items: center;
@@ -75,14 +55,7 @@
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid rgba(255, 107, 107, 0.5);
-            box-shadow: 0 5px 30px rgba(255, 107, 107, 0.2);
-            transition: all 0.4s;
             background: #1a1a2e;
-        }
-
-        .header-image:hover {
-            transform: scale(1.05) rotate(-5deg);
-            border-color: #ff6b6b;
         }
 
         h1 {
@@ -91,57 +64,57 @@
             background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1.2;
         }
 
         .subtitle {
             color: rgba(255, 255, 255, 0.6);
             font-size: 0.95rem;
-            font-weight: 500;
             background: rgba(255, 255, 255, 0.06);
             padding: 5px 16px;
             border-radius: 30px;
             display: inline-block;
-            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Sync Indicator */
         .sync-badge {
             background: rgba(107, 203, 119, 0.15);
             color: #6bcb77;
-            padding: 5px 18px;
+            padding: 8px 20px;
             border-radius: 30px;
             font-size: 0.85rem;
             font-weight: 600;
             border: 1px solid rgba(107, 203, 119, 0.2);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             animation: pulse 2s infinite;
         }
 
         .sync-badge .dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: #6bcb77;
             border-radius: 50%;
             display: inline-block;
-            animation: blink 1.5s infinite;
+            animation: blink 1s infinite;
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(0.8); }
         }
 
-        /* Status Bar */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
         .status-bar {
             background: rgba(255, 255, 255, 0.04);
             border-radius: 20px;
             padding: 16px 22px;
             margin-bottom: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 12px;
             border: 1px solid rgba(255, 255, 255, 0.04);
         }
@@ -150,18 +123,18 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .status-item .label {
             color: rgba(255, 255, 255, 0.5);
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .status-item .value {
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #fff;
         }
 
@@ -169,8 +142,7 @@
             padding: 6px 18px;
             border-radius: 30px;
             font-weight: 600;
-            transition: all 0.3s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             background: rgba(255, 217, 61, 0.12);
             color: #ffd93d;
             border: 1px solid rgba(255, 217, 61, 0.15);
@@ -203,11 +175,6 @@
             border-color: rgba(102, 126, 234, 0.25);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
         .selected-info {
             text-align: center;
             padding: 14px 20px;
@@ -216,26 +183,25 @@
             border-radius: 16px;
             border: 2px solid rgba(255, 107, 107, 0.15);
             color: rgba(255, 255, 255, 0.9);
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 500;
             min-height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
             gap: 10px;
             flex-wrap: wrap;
+            transition: all 0.3s;
         }
 
         .selected-info .badge {
             background: rgba(255, 255, 255, 0.08);
             padding: 2px 14px;
             border-radius: 20px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        /* Remaining Info - NỔI BẬT */
         .remaining-info {
             text-align: center;
             padding: 14px;
@@ -245,7 +211,6 @@
             color: rgba(255, 255, 255, 0.7);
             font-size: 1.1rem;
             border: 2px solid rgba(255, 217, 61, 0.15);
-            font-weight: 600;
         }
 
         .remaining-info .highlight {
@@ -262,7 +227,6 @@
             font-size: 0.9rem;
         }
 
-        /* Cylinder */
         .cylinder-wrapper {
             position: relative;
             max-width: 420px;
@@ -289,28 +253,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
             transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 -3px 8px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             user-select: none;
             background: radial-gradient(circle at 40% 40%, rgba(50, 50, 80, 0.4), rgba(10, 10, 20, 0.6));
-        }
-
-        .chamber::before {
-            content: '';
-            position: absolute;
-            inset: 2px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.04), transparent);
-            pointer-events: none;
-        }
-
-        .chamber:hover:not(.disabled):not(.removed) {
-            transform: scale(1.07);
-            border-color: rgba(255, 107, 107, 0.4);
-            box-shadow: 0 8px 30px rgba(255, 107, 107, 0.15);
         }
 
         .chamber .chamber-number {
@@ -321,7 +269,6 @@
             font-size: 0.6rem;
             color: rgba(255, 255, 255, 0.25);
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
 
         .chamber .bullet-dot {
@@ -330,7 +277,6 @@
             border-radius: 50%;
             background: radial-gradient(circle at 40% 40%, #ff6b6b, #b71c1c);
             box-shadow: 0 0 40px rgba(255, 0, 0, 0.6), inset 0 -4px 8px rgba(0, 0, 0, 0.4);
-            transition: all 0.5s;
             animation: bulletPulse 1.2s ease-in-out infinite;
         }
 
@@ -345,13 +291,11 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.04);
             border: 2px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.5s;
         }
 
         .chamber .chamber-icon {
             font-size: 1.5rem;
             opacity: 0.2;
-            transition: all 0.3s;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -360,7 +304,7 @@
 
         .chamber.selected {
             border-color: rgba(102, 126, 234, 0.7);
-            box-shadow: 0 0 50px rgba(102, 126, 234, 0.2), inset 0 0 30px rgba(102, 126, 234, 0.05);
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.2);
             transform: scale(1.08);
             animation: glowBlue 1.5s ease-in-out infinite;
         }
@@ -368,11 +312,6 @@
         @keyframes glowBlue {
             0%, 100% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.15); }
             50% { box-shadow: 0 0 55px rgba(102, 126, 234, 0.25); }
-        }
-
-        .chamber.fired {
-            border-color: rgba(107, 203, 119, 0.4);
-            box-shadow: 0 0 30px rgba(107, 203, 119, 0.1);
         }
 
         .chamber.exploded {
@@ -433,7 +372,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Stats */
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -461,10 +399,8 @@
             font-size: 0.75rem;
             color: rgba(255, 255, 255, 0.35);
             margin-top: 4px;
-            font-weight: 500;
         }
 
-        /* History */
         .history {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 20px;
@@ -478,8 +414,6 @@
             color: rgba(255, 255, 255, 0.4);
             font-size: 0.85rem;
             margin-bottom: 12px;
-            font-weight: 600;
-            letter-spacing: 1px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -524,13 +458,6 @@
             border: 1px solid rgba(255, 107, 107, 0.1);
         }
 
-        .log-entry.info {
-            background: rgba(102, 126, 234, 0.12);
-            color: #a8b8ff;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-        }
-
-        /* Game Over */
         .game-over {
             text-align: center;
             padding: 20px;
@@ -553,7 +480,6 @@
             color: #ff6b6b;
         }
 
-        /* Controls */
         .controls {
             display: flex;
             gap: 15px;
@@ -577,7 +503,6 @@
         .btn:disabled {
             opacity: 0.3;
             cursor: not-allowed;
-            transform: none !important;
         }
 
         .btn-secondary {
@@ -590,7 +515,6 @@
         .btn-secondary:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.12);
             transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
 
         .btn-fire {
@@ -616,7 +540,6 @@
         .btn-fire:disabled {
             opacity: 0.3;
             cursor: not-allowed;
-            transform: none !important;
         }
 
         .btn-fire .fire-icon {
@@ -645,6 +568,26 @@
             margin: 16px 0 8px;
         }
 
+        .connection-status {
+            text-align: center;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .connection-status.connected {
+            color: #6bcb77;
+            background: rgba(107, 203, 119, 0.05);
+        }
+
+        .connection-status.disconnected {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.05);
+        }
+
         @media (max-width: 600px) {
             .container { padding: 20px; }
             h1 { font-size: 1.6rem; }
@@ -652,8 +595,7 @@
             .cylinder-wrapper { padding: 15px; }
             .cylinder { gap: 12px; }
             .status-bar { grid-template-columns: 1fr 1fr; }
-            .stats { grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px; }
-            .stat-item .stat-value { font-size: 1.5rem; }
+            .stats { grid-template-columns: 1fr 1fr 1fr; padding: 10px; }
             .btn-fire { padding: 15px 40px; font-size: 1.1rem; }
             .remaining-info .highlight { font-size: 1.5rem; }
         }
@@ -661,7 +603,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <div class="header-left">
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%231a1a2e'/%3E%3Ctext x='40' y='50' text-anchor='middle' font-size='34' fill='%23ff6b6b'%3E🔫%3C/text%3E%3C/svg%3E" alt="Russian Roulette" class="header-image">
@@ -672,11 +613,10 @@
             </div>
             <div class="sync-badge">
                 <span class="dot"></span>
-                🔄 Đồng bộ · Tất cả người xem
+                ☁️ Cloud Sync
             </div>
         </div>
 
-        <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-item">
                 <span class="label">📊 Lượt:</span>
@@ -691,27 +631,24 @@
                 <span class="value" id="probabilityDisplay">16.7%</span>
             </div>
             <div class="status-item">
-                <span class="label">👥 Người chơi:</span>
+                <span class="label">👥 Online:</span>
                 <span class="value" id="playerCount">1</span>
             </div>
         </div>
 
-        <!-- Selected Info -->
         <div class="selected-info" id="selectedInfo">
             👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN
-            <span class="badge">🔒 Đồng bộ toàn cục</span>
+            <span class="badge">☁️ Cloud Sync</span>
         </div>
 
-        <!-- Remaining Info - HIỂN THỊ NỔI BẬT SỐ Ô CÒN LẠI -->
         <div class="remaining-info">
-            📦 <span class="sub-text">Số ô còn lại trên ổ quay:</span>
+            📦 <span class="sub-text">Số ô còn lại:</span>
             <span class="highlight" id="remainingCount">6</span>
             <span class="sub-text">/ 6 ô</span>
             <span style="margin-left: 12px; font-weight: 400; color: rgba(255,255,255,0.3);">|</span>
             <span class="sub-text">Đã bắn: <span id="firedCount" style="color: #ff6b6b; font-weight: 700;">0</span></span>
         </div>
 
-        <!-- Stats -->
         <div class="stats">
             <div class="stat-item">
                 <div class="stat-value" id="winCount">0</div>
@@ -727,20 +664,17 @@
             </div>
         </div>
 
-        <!-- Cylinder -->
         <div class="cylinder-wrapper">
             <div class="cylinder" id="cylinder"></div>
             <div class="cylinder-label">▼ Ổ QUAY 6 VỊ TRÍ ▼</div>
         </div>
 
-        <!-- Fire Button -->
         <div class="fire-btn-container">
             <button class="btn-fire" id="fireBtn">
                 <span class="fire-icon">🔫</span> BẮN
             </button>
         </div>
 
-        <!-- History -->
         <div class="history">
             <h3>
                 📜 Lịch sử bóp cò
@@ -751,356 +685,506 @@
             </div>
         </div>
 
-        <!-- Game Over -->
         <div id="gameOverMessage" style="display: none;"></div>
 
-        <!-- Controls -->
         <div class="controls">
             <button class="btn btn-secondary" id="resetBtn">🔄 Ván mới</button>
             <button class="btn btn-secondary" id="syncBtn" style="background: rgba(102, 126, 234, 0.15); border-color: rgba(102, 126, 234, 0.2);">
-                🔄 Làm mới đồng bộ
+                🔄 Đồng bộ
             </button>
         </div>
 
-        <!-- Footer Sync Info -->
-        <div style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.15); font-size: 0.7rem; letter-spacing: 1px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 16px;">
-            ⚡ Trạng thái được đồng bộ · Mọi người cùng nhìn thấy số ô còn lại
+        <div class="connection-status" id="connectionStatus">
+            ⚡ Đang kết nối...
         </div>
     </div>
 
     <script>
-        (function() {
-            class RussianRoulette {
-                constructor() {
-                    this.totalChambers = 6;
-                    this.maxTurns = 5;
-                    this.turn = 0;
-                    this.bulletPosition = -1;
-                    this.gameOver = false;
-                    this.history = [];
-                    this.selectedChamber = -1;
-                    this.removedChambers = new Set();
-                    this.stats = { wins: 0, loses: 0, total: 0 };
-                    this.playerCount = 1;
-                    this.init();
-                    this.startFakeMultiplayer();
-                }
+        // ============================================================
+        // 🔥 THAY THÔNG TIN CỦA BẠN VÀO ĐÂY
+        // Lấy từ Project Settings → API
+        const SUPABASE_URL = 'https://vjynxdfgtgkwzqthjydg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_1cS0_se1jV_8GtEe4YO_mg_qbzm8AKS';
+        // ============================================================
 
-                init() {
-                    this.turn = 0;
-                    this.gameOver = false;
-                    this.history = [];
-                    this.selectedChamber = -1;
-                    this.removedChambers = new Set();
-                    this.bulletPosition = Math.floor(Math.random() * this.totalChambers);
-                    document.getElementById('gameOverMessage').style.display = 'none';
-                    document.getElementById('fireBtn').disabled = false;
-                    this.updateUI();
-                    this.updateSelectedInfo('👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN', '#ff6b6b');
-                    this.updateRemainingInfo();
-                }
+        let gameState = {
+            turn: 0,
+            maxTurns: 5,
+            gameOver: false,
+            bulletPosition: -1,
+            history: [],
+            selectedChamber: -1,
+            removedChambers: [],
+            stats: { wins: 0, loses: 0, total: 0 },
+            playerCount: 1
+        };
 
-                getCurrentProbability() {
-                    const remaining = this.totalChambers - this.removedChambers.size;
-                    if (remaining === 0) return 0;
-                    return (1 / remaining) * 100;
-                }
+        let playerId = `p_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+        let supabase = null;
+        let isSyncing = false;
 
-                getRemainingChambers() {
-                    const remaining = [];
-                    for (let i = 0; i < this.totalChambers; i++) {
-                        if (!this.removedChambers.has(i)) remaining.push(i);
-                    }
-                    return remaining;
-                }
+        function initSupabase() {
+            if (typeof supabaseJs !== 'undefined') {
+                supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase initialized');
+                connectToSupabase();
+            } else {
+                console.error('❌ Supabase library not loaded');
+                document.getElementById('connectionStatus').textContent = '❌ Lỗi tải Supabase';
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                // Fallback local
+                gameState.bulletPosition = Math.floor(Math.random() * 6);
+                updateUI();
+                updateRemainingInfo();
+                updateHistory();
+                updateStats();
+                updateSelectedInfo('📡 Local mode - Không đồng bộ', '#ffd93d');
+            }
+        }
 
-                selectChamber(index) {
-                    if (this.gameOver || this.turn >= this.maxTurns) return;
-                    if (this.removedChambers.has(index)) {
-                        this.updateSelectedInfo('❌ Ô này đã bị xóa! Chọn ô khác', '#ff6b6b');
-                        return;
-                    }
-                    if (this.selectedChamber === index) {
-                        this.selectedChamber = -1;
-                        this.updateUI();
-                        this.updateSelectedInfo('👆 Chọn một ô trên ổ quay', '#ff6b6b');
-                        return;
-                    }
-                    this.selectedChamber = index;
-                    this.updateUI();
-                    this.updateSelectedInfo(`🎯 Đã chọn ô ${index + 1} - Nhấn BẮN`, '#667eea');
-                }
+        async function connectToSupabase() {
+            try {
+                await fetchState();
 
-                fire() {
-                    if (this.gameOver || this.turn >= this.maxTurns) return;
-                    if (this.selectedChamber === -1) {
-                        this.updateSelectedInfo('⚠️ Vui lòng chọn một ô trước khi bắn!', '#ff6b6b');
-                        return;
-                    }
-
-                    const index = this.selectedChamber;
-                    if (this.removedChambers.has(index)) {
-                        this.updateSelectedInfo('❌ Ô đã bị xóa! Chọn ô khác', '#ff6b6b');
-                        this.selectedChamber = -1;
-                        this.updateUI();
-                        return;
-                    }
-
-                    this.turn++;
-                    const hit = (this.bulletPosition === index);
-                    this.history.push({ turn: this.turn, hit, position: index });
-
-                    this.removeChamber(index);
-                    this.selectedChamber = -1;
-                    this.updateUI();
-
-                    if (hit) {
-                        this.gameOver = true;
-                        this.stats.loses++;
-                        this.stats.total++;
-                        const msg = document.getElementById('gameOverMessage');
-                        msg.style.display = 'block';
-                        msg.className = 'game-over lose';
-                        msg.textContent = `💥 BÙM! Trúng đạn tại ô ${index + 1}!`;
-                        this.updateStats();
-                        this.animateChamber(index, 'exploded');
-                        this.updateSelectedInfo('💀 Bạn đã thua!', '#ff6b6b');
-                        document.getElementById('fireBtn').disabled = true;
-                    } else {
-                        this.animateChamber(index, 'fired');
-                        this.updateSelectedInfo(`✅ An toàn! Ô ${index + 1} không có đạn`, '#6bcb77');
-
-                        if (this.turn >= this.maxTurns) {
-                            this.gameOver = true;
-                            this.stats.wins++;
-                            this.stats.total++;
-                            const msg = document.getElementById('gameOverMessage');
-                            msg.style.display = 'block';
-                            msg.className = 'game-over win';
-                            msg.textContent = '🎉 CHIẾN THẮNG! Sống sót qua 5 lượt!';
-                            this.updateStats();
-                            this.updateSelectedInfo('🏆 Bạn đã chiến thắng!', '#6bcb77');
-                            document.getElementById('fireBtn').disabled = true;
-                        } else {
-                            // Đạn di chuyển đến ô còn lại (đồng bộ)
-                            const remaining = this.getRemainingChambers();
-                            if (remaining.length > 0) {
-                                let newPos;
-                                do {
-                                    newPos = remaining[Math.floor(Math.random() * remaining.length)];
-                                } while (newPos === this.bulletPosition && remaining.length > 1);
-                                this.bulletPosition = newPos;
-                                // Thông báo đạn đã di chuyển (ẩn)
+                const channel = supabase
+                    .channel('game_sync')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'game_state'
+                        },
+                        (payload) => {
+                            console.log('🔄 Real-time update');
+                            if (payload.new && payload.new.state) {
+                                const newState = payload.new.state;
+                                if (newState.lastUpdatedBy !== playerId) {
+                                    applyState(newState);
+                                }
                             }
-                            this.updateSelectedInfo(`🔄 Lượt ${this.turn + 1} - Chọn ô tiếp theo`, '#ffd93d');
                         }
-                    }
-
-                    this.updateUI();
-                    this.updateHistory();
-                    this.updateRemainingInfo();
-                    this.updatePlayerCount();
-                }
-
-                removeChamber(index) {
-                    this.removedChambers.add(index);
-                    const chambers = document.querySelectorAll('.chamber');
-                    if (chambers[index]) {
-                        chambers[index].classList.add('removing');
-                        setTimeout(() => {
-                            chambers[index].classList.add('removed');
-                            chambers[index].classList.remove('removing');
-                        }, 600);
-                    }
-                }
-
-                animateChamber(index, className) {
-                    const chambers = document.querySelectorAll('.chamber');
-                    if (chambers[index] && !chambers[index].classList.contains('removed')) {
-                        chambers[index].classList.add(className);
-                        setTimeout(() => {
-                            chambers[index].classList.remove(className);
-                        }, 600);
-                    }
-                }
-
-                updateUI() {
-                    document.getElementById('turnDisplay').textContent = `${this.turn}/${this.maxTurns}`;
-                    const prob = this.getCurrentProbability();
-                    document.getElementById('probabilityDisplay').textContent = prob.toFixed(1) + '%';
-
-                    const statusEl = document.getElementById('statusDisplay');
-                    if (this.gameOver) {
-                        if (this.turn === this.maxTurns) {
-                            statusEl.className = 'bullet-status safe';
-                            statusEl.textContent = '🏆 Chiến thắng!';
-                        } else {
-                            statusEl.className = 'bullet-status danger';
-                            statusEl.textContent = '💀 Bạn đã chết!';
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            document.getElementById('connectionStatus').textContent = '✅ Cloud Sync đã kết nối';
+                            document.getElementById('connectionStatus').className = 'connection-status connected';
+                            console.log('📡 Subscribed to real-time');
                         }
-                    } else if (this.selectedChamber !== -1) {
-                        statusEl.className = 'bullet-status selected';
-                        statusEl.textContent = `🎯 Đã chọn ô ${this.selectedChamber + 1}`;
-                    } else {
-                        statusEl.className = 'bullet-status waiting';
-                        statusEl.textContent = '🟡 Chọn ô để bóp cò';
-                    }
-                    this.renderCylinder();
-                }
-
-                renderCylinder() {
-                    const cylinder = document.getElementById('cylinder');
-                    cylinder.innerHTML = '';
-                    const icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
-
-                    for (let i = 0; i < this.totalChambers; i++) {
-                        const chamber = document.createElement('div');
-                        chamber.className = 'chamber';
-                        chamber.dataset.index = i;
-
-                        // Hiển thị đạn khi game over
-                        if (this.gameOver && i === this.bulletPosition && !this.removedChambers.has(i)) {
-                            const dot = document.createElement('div');
-                            dot.className = 'bullet-dot';
-                            chamber.appendChild(dot);
-                        } else if (!this.removedChambers.has(i)) {
-                            const icon = document.createElement('div');
-                            icon.className = 'chamber-icon';
-                            icon.textContent = icons[i];
-                            chamber.appendChild(icon);
-                            const dot = document.createElement('div');
-                            dot.className = 'empty-dot';
-                            chamber.appendChild(dot);
-                        }
-
-                        const number = document.createElement('div');
-                        number.className = 'chamber-number';
-                        number.textContent = i + 1;
-                        chamber.appendChild(number);
-
-                        if (!this.removedChambers.has(i)) {
-                            const hint = document.createElement('div');
-                            hint.className = 'click-hint';
-                            hint.textContent = '👆 Chọn';
-                            chamber.appendChild(hint);
-                        }
-
-                        if (this.selectedChamber === i && !this.gameOver && !this.removedChambers.has(i)) {
-                            chamber.classList.add('selected');
-                        }
-
-                        if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) {
-                            chamber.classList.add('disabled');
-                        }
-
-                        chamber.addEventListener('click', () => {
-                            if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) return;
-                            this.selectChamber(i);
-                        });
-
-                        cylinder.appendChild(chamber);
-                    }
-                }
-
-                updateSelectedInfo(message, color = '#ff6b6b') {
-                    const info = document.getElementById('selectedInfo');
-                    info.innerHTML = message + ' <span class="badge">🔒 Đồng bộ toàn cục</span>';
-                    info.style.borderColor = color;
-                    const colors = {
-                        '#ff6b6b': 'rgba(255, 107, 107, 0.08)',
-                        '#667eea': 'rgba(102, 126, 234, 0.08)',
-                        '#6bcb77': 'rgba(107, 203, 119, 0.08)',
-                        '#ffd93d': 'rgba(255, 217, 61, 0.08)'
-                    };
-                    info.style.background = colors[color] || 'rgba(255, 107, 107, 0.08)';
-                }
-
-                updateRemainingInfo() {
-                    const remaining = this.totalChambers - this.removedChambers.size;
-                    const fired = this.removedChambers.size;
-                    document.getElementById('remainingCount').textContent = remaining;
-                    document.getElementById('firedCount').textContent = fired;
-                }
-
-                updateHistory() {
-                    const log = document.getElementById('historyLog');
-                    const count = document.getElementById('historyCount');
-                    log.innerHTML = '';
-                    if (this.history.length === 0) {
-                        log.innerHTML = '<span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động nào</span>';
-                        count.textContent = '0 hành động';
-                        return;
-                    }
-                    count.textContent = this.history.length + ' hành động';
-                    this.history.forEach(entry => {
-                        const el = document.createElement('span');
-                        el.className = `log-entry ${entry.hit ? 'danger' : 'safe'}`;
-                        el.textContent = `Lần ${entry.turn} (Ô ${entry.position + 1}): ${entry.hit ? '💥 TRÚNG' : '✅ AN TOÀN'}`;
-                        log.appendChild(el);
                     });
+
+            } catch (error) {
+                console.error('❌ Connection error:', error);
+                document.getElementById('connectionStatus').textContent = '❌ Lỗi kết nối: ' + error.message;
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            }
+        }
+
+        async function fetchState() {
+            try {
+                const { data, error } = await supabase
+                    .from('game_state')
+                    .select('state')
+                    .eq('id', '1')
+                    .single();
+
+                if (error) {
+                    console.error('❌ Fetch error:', error);
+                    await initializeGameState();
+                    return;
                 }
 
-                updateStats() {
-                    document.getElementById('winCount').textContent = this.stats.wins;
-                    document.getElementById('loseCount').textContent = this.stats.loses;
-                    document.getElementById('totalGames').textContent = this.stats.total;
+                if (data && data.state) {
+                    applyState(data.state);
+                } else {
+                    await initializeGameState();
                 }
+            } catch (error) {
+                console.error('❌ Fetch error:', error);
+            }
+        }
 
-                updatePlayerCount() {
-                    // Mô phỏng nhiều người xem
-                    this.playerCount = 1 + Math.floor(Math.random() * 5);
-                    document.getElementById('playerCount').textContent = this.playerCount;
+        async function initializeGameState() {
+            const initialState = {
+                turn: 0,
+                maxTurns: 5,
+                gameOver: false,
+                bulletPosition: Math.floor(Math.random() * 6),
+                history: [],
+                selectedChamber: -1,
+                removedChambers: [],
+                stats: { wins: 0, loses: 0, total: 0 },
+                playerCount: 1,
+                lastUpdatedBy: playerId
+            };
+
+            try {
+                const { error } = await supabase
+                    .from('game_state')
+                    .upsert({
+                        id: '1',
+                        state: initialState,
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.error('❌ Init error:', error);
+                    applyState(initialState);
+                } else {
+                    applyState(initialState);
                 }
+            } catch (error) {
+                console.error('❌ Init error:', error);
+                applyState(initialState);
+            }
+        }
 
-                startFakeMultiplayer() {
-                    setInterval(() => {
-                        if (!this.gameOver) {
-                            this.updatePlayerCount();
-                        }
-                    }, 5000);
+        async function updateCloudState() {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            try {
+                const stateToSave = {
+                    ...gameState,
+                    lastUpdatedBy: playerId,
+                    timestamp: Date.now()
+                };
+
+                const { error } = await supabase
+                    .from('game_state')
+                    .upsert({
+                        id: '1',
+                        state: stateToSave,
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.error('❌ Update error:', error);
                 }
+            } catch (error) {
+                console.error('❌ Update error:', error);
+            } finally {
+                isSyncing = false;
+            }
+        }
 
-                reset() {
-                    this.init();
-                    this.updateStats();
-                    this.updateHistory();
-                    document.getElementById('gameOverMessage').style.display = 'none';
-                    document.getElementById('fireBtn').disabled = false;
-                    this.selectedChamber = -1;
-                    this.removedChambers = new Set();
-                    this.bulletPosition = Math.floor(Math.random() * this.totalChambers);
-                    this.updateUI();
-                    this.updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
-                    this.updateRemainingInfo();
-                    this.updatePlayerCount();
+        function applyState(state) {
+            if (!state) return;
+            const stateChanged = JSON.stringify(gameState) !== JSON.stringify(state);
+            if (!stateChanged) return;
+
+            gameState = {
+                ...state,
+                maxTurns: state.maxTurns || 5
+            };
+
+            updateUI();
+            updateRemainingInfo();
+            updateHistory();
+            updateStats();
+            updateSelectedInfoBasedOnState();
+            document.getElementById('playerCount').textContent = state.playerCount || 1;
+        }
+
+        // ====== GAME LOGIC ======
+        function getRemainingChambers() {
+            const remaining = [];
+            for (let i = 0; i < 6; i++) {
+                if (!gameState.removedChambers.includes(i)) {
+                    remaining.push(i);
                 }
+            }
+            return remaining;
+        }
 
-                sync() {
-                    // Làm mới đồng bộ - cập nhật UI
-                    this.updateUI();
-                    this.updateRemainingInfo();
-                    this.updateHistory();
-                    this.updateStats();
-                    this.updatePlayerCount();
-                    this.updateSelectedInfo('🔄 Đã làm mới đồng bộ', '#667eea');
-                    setTimeout(() => {
-                        if (!this.gameOver) {
-                            this.updateSelectedInfo('👆 Chọn ô và nhấn BẮN', '#ff6b6b');
-                        }
-                    }, 1500);
+        function getProbability() {
+            const remaining = 6 - gameState.removedChambers.length;
+            if (remaining === 0) return 0;
+            return (1 / remaining) * 100;
+        }
+
+        function selectChamber(index) {
+            if (gameState.gameOver || gameState.turn >= gameState.maxTurns) return;
+            if (gameState.removedChambers.includes(index)) return;
+
+            if (gameState.selectedChamber === index) {
+                gameState.selectedChamber = -1;
+            } else {
+                gameState.selectedChamber = index;
+            }
+            
+            updateUI();
+            updateCloudState();
+            updateSelectedInfoBasedOnState();
+        }
+
+        async function fire() {
+            if (gameState.gameOver || gameState.turn >= gameState.maxTurns) return;
+            if (gameState.selectedChamber === -1) {
+                updateSelectedInfo('⚠️ Vui lòng chọn ô trước khi bắn!', '#ff6b6b');
+                return;
+            }
+
+            const index = gameState.selectedChamber;
+            if (gameState.removedChambers.includes(index)) {
+                gameState.selectedChamber = -1;
+                updateUI();
+                updateSelectedInfo('❌ Ô đã bị xóa! Chọn ô khác', '#ff6b6b');
+                return;
+            }
+
+            gameState.turn++;
+            const hit = gameState.bulletPosition === index;
+            gameState.history.push({
+                turn: gameState.turn,
+                hit: hit,
+                position: index,
+                player: playerId
+            });
+
+            gameState.removedChambers.push(index);
+            gameState.selectedChamber = -1;
+
+            if (hit) {
+                gameState.gameOver = true;
+                gameState.stats.loses++;
+                gameState.stats.total++;
+                document.getElementById('fireBtn').disabled = true;
+                animateChamber(index, 'exploded');
+                showGameOver(false, index);
+            } else {
+                animateChamber(index, 'fired');
+                
+                if (gameState.turn >= gameState.maxTurns) {
+                    gameState.gameOver = true;
+                    gameState.stats.wins++;
+                    gameState.stats.total++;
+                    document.getElementById('fireBtn').disabled = true;
+                    showGameOver(true);
+                } else {
+                    const remaining = getRemainingChambers();
+                    if (remaining.length > 0) {
+                        let newPos;
+                        do {
+                            newPos = remaining[Math.floor(Math.random() * remaining.length)];
+                        } while (newPos === gameState.bulletPosition && remaining.length > 1);
+                        gameState.bulletPosition = newPos;
+                    }
                 }
             }
 
-            const game = new RussianRoulette();
+            updateUI();
+            updateRemainingInfo();
+            updateHistory();
+            updateStats();
+            await updateCloudState();
+            updateSelectedInfoBasedOnState();
+        }
 
-            document.getElementById('fireBtn').addEventListener('click', () => game.fire());
-            document.getElementById('resetBtn').addEventListener('click', () => game.reset());
-            document.getElementById('syncBtn').addEventListener('click', () => game.sync());
+        function resetGame() {
+            gameState.turn = 0;
+            gameState.gameOver = false;
+            gameState.history = [];
+            gameState.selectedChamber = -1;
+            gameState.removedChambers = [];
+            gameState.bulletPosition = Math.floor(Math.random() * 6);
+            gameState.stats = { wins: 0, loses: 0, total: 0 };
+            
+            document.getElementById('gameOverMessage').style.display = 'none';
+            document.getElementById('fireBtn').disabled = false;
 
-            // Thông báo đồng bộ khi tải trang
-            console.log('🔫 Russian Roulette - Đồng bộ đa người xem');
-            console.log('📊 Tất cả người xem đều thấy cùng trạng thái!');
-        })();
+            updateUI();
+            updateRemainingInfo();
+            updateHistory();
+            updateStats();
+            updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
+            updateCloudState();
+        }
+
+        // ====== UI UPDATE ======
+        function updateUI() {
+            document.getElementById('turnDisplay').textContent = `${gameState.turn}/${gameState.maxTurns}`;
+            document.getElementById('probabilityDisplay').textContent = getProbability().toFixed(1) + '%';
+
+            const statusEl = document.getElementById('statusDisplay');
+            if (gameState.gameOver) {
+                if (gameState.turn === gameState.maxTurns) {
+                    statusEl.className = 'bullet-status safe';
+                    statusEl.textContent = '🏆 Chiến thắng!';
+                } else {
+                    statusEl.className = 'bullet-status danger';
+                    statusEl.textContent = '💀 Bạn đã chết!';
+                }
+            } else if (gameState.selectedChamber !== -1) {
+                statusEl.className = 'bullet-status selected';
+                statusEl.textContent = `🎯 Đã chọn ô ${gameState.selectedChamber + 1}`;
+            } else {
+                statusEl.className = 'bullet-status waiting';
+                statusEl.textContent = '🟡 Chọn ô để bóp cò';
+            }
+
+            renderCylinder();
+        }
+
+        function renderCylinder() {
+            const cylinder = document.getElementById('cylinder');
+            cylinder.innerHTML = '';
+            const icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
+
+            for (let i = 0; i < 6; i++) {
+                const chamber = document.createElement('div');
+                chamber.className = 'chamber';
+                chamber.dataset.index = i;
+
+                if (gameState.gameOver && i === gameState.bulletPosition && !gameState.removedChambers.includes(i)) {
+                    const dot = document.createElement('div');
+                    dot.className = 'bullet-dot';
+                    chamber.appendChild(dot);
+                } else if (!gameState.removedChambers.includes(i)) {
+                    const icon = document.createElement('div');
+                    icon.className = 'chamber-icon';
+                    icon.textContent = icons[i];
+                    chamber.appendChild(icon);
+                    const dot = document.createElement('div');
+                    dot.className = 'empty-dot';
+                    chamber.appendChild(dot);
+                }
+
+                const number = document.createElement('div');
+                number.className = 'chamber-number';
+                number.textContent = i + 1;
+                chamber.appendChild(number);
+
+                if (!gameState.removedChambers.includes(i)) {
+                    const hint = document.createElement('div');
+                    hint.className = 'click-hint';
+                    hint.textContent = '👆 Chọn';
+                    chamber.appendChild(hint);
+                }
+
+                if (gameState.selectedChamber === i && !gameState.gameOver && !gameState.removedChambers.includes(i)) {
+                    chamber.classList.add('selected');
+                }
+
+                if (gameState.gameOver || gameState.turn >= gameState.maxTurns || gameState.removedChambers.includes(i)) {
+                    chamber.classList.add('disabled');
+                }
+
+                chamber.addEventListener('click', () => {
+                    selectChamber(i);
+                });
+
+                cylinder.appendChild(chamber);
+            }
+        }
+
+        function animateChamber(index, className) {
+            const chambers = document.querySelectorAll('.chamber');
+            if (chambers[index] && !chambers[index].classList.contains('removed')) {
+                chambers[index].classList.add(className);
+                setTimeout(() => {
+                    chambers[index].classList.remove(className);
+                }, 600);
+            }
+        }
+
+        function updateRemainingInfo() {
+            const remaining = 6 - gameState.removedChambers.length;
+            document.getElementById('remainingCount').textContent = remaining;
+            document.getElementById('firedCount').textContent = gameState.removedChambers.length;
+        }
+
+        function updateHistory() {
+            const log = document.getElementById('historyLog');
+            const count = document.getElementById('historyCount');
+            log.innerHTML = '';
+            
+            if (gameState.history.length === 0) {
+                log.innerHTML = '<span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động nào</span>';
+                count.textContent = '0 hành động';
+                return;
+            }
+            
+            count.textContent = gameState.history.length + ' hành động';
+            gameState.history.forEach(entry => {
+                const el = document.createElement('span');
+                el.className = `log-entry ${entry.hit ? 'danger' : 'safe'}`;
+                el.textContent = `Lần ${entry.turn} (Ô ${entry.position + 1}): ${entry.hit ? '💥 TRÚNG' : '✅ AN TOÀN'}`;
+                log.appendChild(el);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('winCount').textContent = gameState.stats.wins;
+            document.getElementById('loseCount').textContent = gameState.stats.loses;
+            document.getElementById('totalGames').textContent = gameState.stats.total;
+        }
+
+        function updateSelectedInfo(message, color = '#ff6b6b') {
+            const info = document.getElementById('selectedInfo');
+            info.innerHTML = message + ' <span class="badge">☁️ Cloud Sync</span>';
+            info.style.borderColor = color;
+            const colors = {
+                '#ff6b6b': 'rgba(255, 107, 107, 0.08)',
+                '#667eea': 'rgba(102, 126, 234, 0.08)',
+                '#6bcb77': 'rgba(107, 203, 119, 0.08)',
+                '#ffd93d': 'rgba(255, 217, 61, 0.08)'
+            };
+            info.style.background = colors[color] || 'rgba(255, 107, 107, 0.08)';
+        }
+
+        function updateSelectedInfoBasedOnState() {
+            if (gameState.gameOver) {
+                if (gameState.turn === gameState.maxTurns) {
+                    updateSelectedInfo('🏆 Chiến thắng!', '#6bcb77');
+                } else {
+                    updateSelectedInfo('💀 Bạn đã thua!', '#ff6b6b');
+                }
+            } else if (gameState.selectedChamber !== -1) {
+                updateSelectedInfo(`🎯 Đã chọn ô ${gameState.selectedChamber + 1} - Nhấn BẮN`, '#667eea');
+            } else {
+                updateSelectedInfo('👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN', '#ff6b6b');
+            }
+        }
+
+        function showGameOver(win, position) {
+            const msg = document.getElementById('gameOverMessage');
+            msg.style.display = 'block';
+            if (win) {
+                msg.className = 'game-over win';
+                msg.textContent = '🎉 CHIẾN THẮNG! Sống sót qua 5 lượt!';
+            } else {
+                msg.className = 'game-over lose';
+                msg.textContent = `💥 BÙM! Trúng đạn tại ô ${position + 1}!`;
+            }
+        }
+
+        // ====== EVENT LISTENERS ======
+        document.getElementById('fireBtn').addEventListener('click', fire);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+        document.getElementById('syncBtn').addEventListener('click', async () => {
+            await fetchState();
+            updateSelectedInfo('🔄 Đã đồng bộ!', '#667eea');
+            setTimeout(() => updateSelectedInfoBasedOnState(), 1500);
+        });
+
+        // ====== KHỞI TẠO ======
+        if (typeof supabaseJs !== 'undefined') {
+            initSupabase();
+        } else {
+            console.warn('⚠️ Supabase not loaded, running in local mode');
+            gameState.bulletPosition = Math.floor(Math.random() * 6);
+            updateUI();
+            updateRemainingInfo();
+            updateHistory();
+            updateStats();
+            updateSelectedInfo('📡 Local mode - Không đồng bộ', '#ffd93d');
+            document.getElementById('connectionStatus').textContent = '⚠️ Local mode (không đồng bộ)';
+            document.getElementById('connectionStatus').className = 'connection-status disconnected';
+        }
+
+        console.log('🎯 Russian Roulette - Cloud Sync Ready');
+        console.log(`👤 Player ID: ${playerId}`);
     </script>
 </body>
 </html>
