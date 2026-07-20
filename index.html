@@ -253,7 +253,7 @@
         }
 
         .cylinder-wrapper {
-            max-width: 300px;
+            max-width: 340px;
             margin: 10px auto;
             padding: 14px;
             background: rgba(0,0,0,0.25);
@@ -263,20 +263,21 @@
         .cylinder {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
         .chamber {
             aspect-ratio: 1;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
-            border: 2px solid rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.08);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
             position: relative;
             cursor: pointer;
             transition: all 0.3s;
+            gap: 2px;
         }
         .chamber:hover:not(.disabled):not(.removed) {
             transform: scale(1.06);
@@ -284,33 +285,44 @@
         }
         .chamber .num {
             position: absolute;
-            top: 1px;
+            top: -6px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 0.4rem;
-            color: rgba(255,255,255,0.12);
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.3);
             font-weight: 700;
+            background: rgba(0,0,0,0.3);
+            padding: 0 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            min-width: 18px;
+            text-align: center;
+            z-index: 2;
         }
         .chamber .icon {
-            font-size: 1rem;
-            opacity: 0.2;
+            font-size: 1.3rem;
+            opacity: 0.5;
+            transition: all 0.3s;
+            line-height: 1;
         }
+        .chamber:hover .icon { opacity: 0.8; }
         .chamber .dot {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.04);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s;
         }
         .chamber .bullet-dot {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background: radial-gradient(circle at 40% 40%, #ff6b6b, #c0392b);
-            box-shadow: 0 0 20px rgba(255,0,0,0.3);
+            box-shadow: 0 0 30px rgba(255,0,0,0.4);
             animation: bulletPulse 1.2s ease-in-out infinite;
         }
-        @keyframes bulletPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        @keyframes bulletPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
         .chamber.selected {
             border-color: rgba(102,126,234,0.5);
             box-shadow: 0 0 30px rgba(102,126,234,0.12);
@@ -321,11 +333,14 @@
             border-color: rgba(107,203,119,0.25);
             background: radial-gradient(circle at 30% 30%, rgba(107,203,119,0.04), rgba(107,203,119,0.01));
         }
+        .chamber.fired .icon { color: #6bcb77; opacity: 0.8; }
         .chamber.exploded {
             border-color: rgba(255,107,107,0.5);
             box-shadow: 0 0 40px rgba(255,107,107,0.15);
             animation: explode 0.5s ease-out;
+            background: radial-gradient(circle at 30% 30%, rgba(255,107,107,0.1), rgba(255,107,107,0.03));
         }
+        .chamber.exploded .icon { color: #ff6b6b; opacity: 1; }
         @keyframes explode {
             0%{transform:scale(1)}
             30%{transform:scale(1.2)}
@@ -337,6 +352,7 @@
             opacity: 0;
             pointer-events: none;
             border-color: transparent;
+            box-shadow: none;
             margin: 0;
             padding: 0;
             min-height: 0;
@@ -356,11 +372,11 @@
         }
         .chamber .hint {
             position: absolute;
-            bottom: 0;
+            bottom: 2px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 0.35rem;
-            color: rgba(255,255,255,0.08);
+            font-size: 0.4rem;
+            color: rgba(255,255,255,0.1);
             opacity: 0;
             transition: opacity 0.3s;
             white-space: nowrap;
@@ -934,12 +950,12 @@
                         <span class="balance-value" id="balanceDisplay">1,000,000,000</span>
                     </div>
                     <div class="bet-amount">
-                        <input type="number" id="betAmount" placeholder="Số tiền" min="10" value="100">
+                        <input type="number" id="betAmount" placeholder="Số tiền" min="10" value="100" disabled>
                         <div class="bet-presets">
-                            <button data-amount="50">50</button>
-                            <button data-amount="100">100</button>
-                            <button data-amount="500">500</button>
-                            <button data-amount="1000">1K</button>
+                            <button data-amount="50" disabled>50</button>
+                            <button data-amount="100" disabled>100</button>
+                            <button data-amount="500" disabled>500</button>
+                            <button data-amount="1000" disabled>1K</button>
                         </div>
                     </div>
                     <div class="bet-actions">
@@ -954,7 +970,7 @@
                     <h4>🏆 TIỀN THƯỞNG</h4>
                     <div class="reward-input-group">
                         <span class="reward-label">💰</span>
-                        <input type="number" id="rewardAmount" placeholder="Nhập tiền thưởng..." min="0" value="500">
+                        <input type="number" id="rewardAmount" placeholder="Nhập tiền thưởng..." min="0" value="500" disabled>
                         <span class="reward-label">đ</span>
                     </div>
                     <div class="reward-display">🎯 Thưởng: <span id="rewardValue">500</span>đ khi sống sót 5 lượt</div>
@@ -1153,56 +1169,80 @@
                 });
             }
 
+            // ===== CHAT FIX - DÙNG on('value') =====
             listenToChat() {
+                // Xóa listener cũ nếu có
                 if (this.chatListener) {
                     this.chatListener.off();
                     this.chatListener = null;
                 }
                 
+                // Tạo query lấy 50 tin nhắn gần nhất
                 const messagesQuery = query(MESSAGES_REF, orderByChild('timestamp'), limitToLast(50));
                 this.chatListener = messagesQuery;
                 
+                // Lắng nghe thay đổi - dùng on('value')
                 onValue(messagesQuery, (snapshot) => {
                     const data = snapshot.val();
                     const container = document.getElementById('chatMessages');
                     
                     if (!data) {
-                        container.innerHTML = '';
-                        const welcome = document.createElement('div');
-                        welcome.className = 'message system';
-                        welcome.textContent = '💬 Chat không cần đăng nhập!';
-                        container.appendChild(welcome);
+                        // Hiển thị tin nhắn chào nếu chưa có tin nhắn
+                        if (container.children.length === 0) {
+                            const welcome = document.createElement('div');
+                            welcome.className = 'message system';
+                            welcome.textContent = '💬 Chat không cần đăng nhập!';
+                            container.appendChild(welcome);
+                        }
                         return;
                     }
                     
+                    // Chuyển object thành array và sắp xếp
                     const messages = Object.keys(data).map(key => ({
                         id: key,
                         ...data[key]
-                    })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    })).sort((a, b) => a.timestamp - b.timestamp);
                     
-                    container.innerHTML = '';
-                    messages.forEach(msg => {
-                        const div = document.createElement('div');
-                        div.setAttribute('data-msg-id', msg.id);
-                        
-                        if (msg.type === 'system') {
-                            div.className = 'message system';
-                            div.textContent = msg.text;
-                        } else {
-                            const user = msg.user || 'Anonymous';
-                            const isSelf = user === (this.currentUser?.displayName || this.currentUser?.email || 'Anonymous');
-                            div.className = `message ${isSelf ? 'self-msg' : 'user-msg'}`;
-                            const time = new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                            div.innerHTML = `
-                                <span class="msg-user">${user}</span>
-                                <span class="msg-text">${msg.text}</span>
-                                <span class="msg-time">${time}</span>
-                            `;
-                        }
-                        container.appendChild(div);
-                    });
-                    container.scrollTop = container.scrollHeight;
+                    // Render tin nhắn
+                    this.renderChatMessages(messages);
                 });
+            }
+
+            renderChatMessages(messages) {
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+                
+                if (!messages || messages.length === 0) {
+                    const welcome = document.createElement('div');
+                    welcome.className = 'message system';
+                    welcome.textContent = '💬 Chat không cần đăng nhập!';
+                    container.appendChild(welcome);
+                    return;
+                }
+                
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.setAttribute('data-msg-id', msg.id);
+                    
+                    if (msg.type === 'system') {
+                        div.className = 'message system';
+                        div.textContent = msg.text;
+                    } else {
+                        const user = msg.user || 'Anonymous';
+                        const isSelf = user === (this.currentUser?.displayName || this.currentUser?.email || 'Anonymous');
+                        div.className = `message ${isSelf ? 'self-msg' : 'user-msg'}`;
+                        const time = new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                        div.innerHTML = `
+                            <span class="msg-user">${user}</span>
+                            <span class="msg-text">${msg.text}</span>
+                            <span class="msg-time">${time}</span>
+                        `;
+                    }
+                    container.appendChild(div);
+                });
+                
+                // Cuộn xuống tin nhắn mới nhất
+                container.scrollTop = container.scrollHeight;
             }
 
             updateGameState() {
@@ -1265,42 +1305,59 @@
                     chamber.className = 'chamber';
                     chamber.dataset.index = i;
 
-                    if (this.gameOver && i === this.bulletPosition) {
-                        const dot = document.createElement('div');
-                        dot.className = 'bullet-dot';
-                        chamber.appendChild(dot);
-                    } else if (!this.removedChambers.has(i)) {
-                        const icon = document.createElement('div');
-                        icon.className = 'icon';
-                        icon.textContent = icons[i];
-                        chamber.appendChild(icon);
-                        const dot = document.createElement('div');
-                        dot.className = 'dot';
-                        chamber.appendChild(dot);
-                    }
-
+                    // Số thứ tự - luôn hiển thị
                     const num = document.createElement('div');
                     num.className = 'num';
                     num.textContent = i + 1;
                     chamber.appendChild(num);
 
-                    if (!this.removedChambers.has(i)) {
+                    const isRemoved = this.removedChambers.has(i);
+                    const isSelected = this.selectedChamber === i && !this.gameOver && !isRemoved;
+                    const isBullet = this.bulletPosition === i;
+                    const isFired = this.history.some(h => h.position === i);
+
+                    // Icon
+                    const icon = document.createElement('div');
+                    icon.className = 'icon';
+                    if (isRemoved) {
+                        icon.textContent = '💨';
+                        chamber.classList.add('removed');
+                    } else if (this.gameOver && isBullet) {
+                        icon.textContent = '💥';
+                        chamber.classList.add('exploded');
+                    } else if (isFired && !isBullet) {
+                        icon.textContent = '✅';
+                        chamber.classList.add('fired');
+                    } else {
+                        icon.textContent = icons[i];
+                    }
+                    chamber.appendChild(icon);
+
+                    // Dot - luôn hiển thị cho ô chưa bị xóa
+                    if (!isRemoved) {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        chamber.appendChild(dot);
+                    }
+
+                    // Hint - luôn hiển thị cho ô chưa bị xóa
+                    if (!isRemoved) {
                         const hint = document.createElement('div');
                         hint.className = 'hint';
                         hint.textContent = '👆 Chọn';
                         chamber.appendChild(hint);
                     }
 
-                    if (this.selectedChamber === i && !this.gameOver && !this.removedChambers.has(i)) {
+                    if (isSelected) {
                         chamber.classList.add('selected');
                     }
 
-                    if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) {
+                    if (this.gameOver || this.turn >= this.maxTurns || isRemoved) {
                         chamber.classList.add('disabled');
                     }
 
                     chamber.addEventListener('click', () => {
-                        if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) return;
+                        if (this.gameOver || this.turn >= this.maxTurns || isRemoved) return;
                         this.selectChamber(i);
                     });
 
@@ -1468,6 +1525,7 @@
                 sound.play('click');
             }
 
+            // ===== LOGIC BẮN - SỐNG SÓT QUA 5 LƯỢT MỚI THẮNG =====
             fire() {
                 if (!this.isHost) {
                     alert('⚠️ Chỉ Host (admin1@game.com) mới được bắn!');
@@ -1490,6 +1548,7 @@
                 this.selectedChamber = -1;
 
                 if (hit) {
+                    // TRÚNG ĐẠN → THUA (kể cả lượt 5)
                     sound.play('no');
                     this.gameOver = true;
                     this.stats.loses++;
@@ -1500,6 +1559,7 @@
                         this.processBetResult(false);
                     }
                 } else {
+                    // AN TOÀN
                     sound.play('tach');
                     this.addChatMessage('system', `✅ ${who} ô ${index + 1} an toàn! (Lượt ${this.turn}/${this.maxTurns})`);
 
@@ -1507,7 +1567,9 @@
                         this.processBetResult(true);
                     }
 
+                    // KIỂM TRA ĐÃ SỐNG SÓT QUA 5 LƯỢT CHƯA
                     if (this.turn >= this.maxTurns) {
+                        // ĐÃ SỐNG SÓT 5 LƯỢT → THẮNG
                         sound.play('win');
                         this.gameOver = true;
                         this.stats.wins++;
@@ -1520,6 +1582,7 @@
                         this.addChatMessage('system', `🎉 ${who} CHIẾN THẮNG! Sống sót ${this.maxTurns} lượt! Nhận ${reward.toLocaleString()}đ thưởng!`);
                         this.updateBalance();
                     } else {
+                        // DI CHUYỂN ĐẠN ĐẾN Ô KHÁC
                         const remaining = this.getRemainingChambers();
                         if (remaining.length > 0) {
                             let newPos;
@@ -1768,11 +1831,8 @@
                 loginBtn.style.display = 'none';
                 userName.textContent = user.displayName || user.email || 'User';
                 userAvatar.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
-                
-                // BẬT CHAT KHI ĐÃ ĐĂNG NHẬP
                 chatInput.disabled = false;
                 sendBtn.disabled = false;
-                chatInput.placeholder = 'Nhập tin nhắn...';
                 
                 game.setUser(user);
                 game.loadUserData(user.uid);
@@ -1791,9 +1851,8 @@
                 document.getElementById('fireBtn').disabled = true;
                 document.getElementById('betBtn').disabled = true;
                 resetBtn.disabled = true;
-                chatInput.disabled = true;
-                sendBtn.disabled = true;
-                chatInput.placeholder = 'Vui lòng đăng nhập...';
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
             }
         });
 
@@ -1816,82 +1875,22 @@
 
         function sendChatMessage() {
             const text = chatInput.value.trim();
-            if (!text) {
-                showToast('⚠️ Vui lòng nhập tin nhắn!', 'error');
-                return;
-            }
-            if (!game.currentUser) {
-                showToast('⚠️ Vui lòng đăng nhập!', 'error');
-                loginBtn.click();
-                return;
-            }
-            
+            if (!text) return;
             const user = game.currentUser?.displayName || game.currentUser?.email || 'Anonymous';
-            
             push(MESSAGES_REF, {
                 type: 'user',
                 text: text,
                 user: user,
                 timestamp: Date.now()
-            }).then(() => {
-                chatInput.value = '';
-                sound.play('click');
-            }).catch((error) => {
-                console.error('Lỗi gửi tin nhắn:', error);
-                showToast('❌ Không thể gửi tin nhắn!', 'error');
             });
+            chatInput.value = '';
+            sound.play('click');
         }
 
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: ${type === 'error' ? '#ef4444' : '#10b981'};
-                color: white;
-                padding: 10px 20px;
-                border-radius: 12px;
-                font-size: 14px;
-                font-weight: 600;
-                z-index: 9999;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                animation: slideUp 0.3s ease;
-                max-width: 90%;
-                text-align: center;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // Thêm CSS cho toast
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideUp {
-                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-                to { opacity: 1; transform: translateX(-50%) translateY(0); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Gắn sự kiện gửi tin nhắn - DÙNG onclick thay vì addEventListener
-        sendBtn.onclick = function(e) {
-            e.preventDefault();
-            sendChatMessage();
-        };
-        
-        chatInput.onkeypress = function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendChatMessage();
-            }
-        };
+        sendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
 
         // ============================================================
         // 7. BETTING
@@ -2019,7 +2018,6 @@
         console.log('👑 Host: admin1@game.com');
         console.log('🔄 Băng đạn và chat đã được đồng bộ realtime!');
         console.log('🎯 Luật: Sống sót qua 5 lượt là THẮNG!');
-        console.log('💬 Chat đã sẵn sàng!');
     </script>
 </body>
 </html>
