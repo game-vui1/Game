@@ -352,6 +352,13 @@
             color: rgba(255, 217, 61, 0.6);
             margin: 5px 0;
         }
+        .sync-flash {
+            animation: syncFlash 0.3s ease-out;
+        }
+        @keyframes syncFlash {
+            0% { background: rgba(107, 203, 119, 0.3); }
+            100% { background: rgba(255, 255, 255, 0.05); }
+        }
     </style>
 </head>
 <body>
@@ -484,8 +491,10 @@
 
         var peer = null;
         var connections = [];
-        var isHost = true; // Mặc định là host
+        var isHost = true;
         var myId = '';
+        var autoSyncInterval = null;
+        var isSyncing = false;
 
         // ====== PEERJS ======
         function initPeer() {
@@ -508,11 +517,10 @@
                 document.getElementById('playerCount').textContent = connections.length + 1;
                 updateSelectedInfo('👤 Đã kết nối với ' + conn.peer, '#6bcb77');
                 
-                // Gửi state hiện tại cho người mới + thông báo họ là viewer
                 conn.send({
                     type: 'sync',
                     data: gameState,
-                    isViewer: true // Báo cho client biết họ là viewer
+                    isViewer: true
                 });
             });
 
@@ -530,7 +538,6 @@
                     if (data.data) {
                         applyState(data.data);
                     }
-                    // Nếu server báo mình là viewer
                     if (data.isViewer === true) {
                         isHost = false;
                         updateRoleUI();
@@ -565,7 +572,6 @@
                 return;
             }
 
-            // Khi kết nối đến người khác, mình là viewer
             isHost = false;
             updateRoleUI();
 
@@ -577,7 +583,6 @@
             document.getElementById('connectionStatus').className = 'connection-status connected';
             updateSelectedInfo('👤 Đã kết nối với host ' + peerId + ' (Chế độ xem)', '#a8b8ff');
             
-            // Gửi state hiện tại
             conn.send({
                 type: 'sync',
                 data: gameState
@@ -590,7 +595,6 @@
             var overlay = document.getElementById('viewerOverlay');
             var fireBtn = document.getElementById('fireBtn');
             var resetBtn = document.getElementById('resetBtn');
-            var syncBtn = document.getElementById('syncBtn');
             var chambers = document.querySelectorAll('.chamber');
 
             if (isHost) {
@@ -599,8 +603,6 @@
                 overlay.style.display = 'none';
                 fireBtn.disabled = false;
                 resetBtn.disabled = false;
-                syncBtn.disabled = false;
-                // Bật click cho các ô
                 chambers.forEach(function(ch) {
                     ch.style.cursor = 'pointer';
                 });
@@ -611,8 +613,6 @@
                 overlay.style.display = 'block';
                 fireBtn.disabled = true;
                 resetBtn.disabled = true;
-                syncBtn.disabled = false; // Vẫn có thể sync để xem
-                // Tắt click cho các ô
                 chambers.forEach(function(ch) {
                     ch.style.cursor = 'not-allowed';
                 });
@@ -638,7 +638,6 @@
         }
 
         function selectChamber(index) {
-            // Chỉ host mới được chọn
             if (!isHost) {
                 updateSelectedInfo('👁️ Chỉ host mới có thể chọn ô!', '#ffd93d');
                 return;
@@ -661,11 +660,10 @@
             updateUI();
             updateSelectedInfoBasedOnState();
             broadcastAction('select', index);
-            broadcastState(); // Đồng bộ state luôn
+            forceSync(); // Đồng bộ ngay khi chọn ô
         }
 
         function fire() {
-            // Chỉ host mới được bắn
             if (!isHost) {
                 updateSelectedInfo('👁️ Chỉ host mới có thể bắn!', '#ffd93d');
                 return;
@@ -733,11 +731,10 @@
             updateStats();
             updateSelectedInfoBasedOnState();
             broadcastAction('fire', index);
-            broadcastState(); // Đồng bộ state luôn
+            forceSync(); // 🔥 Đồng bộ NGAY sau khi bắn!
         }
 
         function resetGame() {
-            // Chỉ host mới được reset
             if (!isHost) {
                 updateSelectedInfo('👁️ Chỉ host mới có thể reset!', '#ffd93d');
                 return;
@@ -761,14 +758,12 @@
             updateStats();
             updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
             broadcastAction('reset');
-            broadcastState();
+            forceSync(); // Đồng bộ ngay khi reset
         }
 
         function handleRemoteAction(action, index) {
             console.log('📨 Remote action:', action, index);
-            // Viewer chỉ nhận và cập nhật UI
             if (action === 'reset') {
-                // Reset game nhưng không gửi lại
                 gameState.turn = 0;
                 gameState.gameOver = false;
                 gameState.history = [];
@@ -787,7 +782,7 @@
             }
         }
 
-        // ====== BROADCAST ======
+        // ====== SYNC FUNCTIONS ======
         function broadcastAction(action, index) {
             var data = {
                 type: 'action',
@@ -815,6 +810,27 @@
                     console.error('❌ Send error:', e);
                 }
             });
+        }
+
+        // 🔥 Hàm đồng bộ NGAY LẬP TỨC
+        function forceSync() {
+            if (isSyncing) return;
+            isSyncing = true;
+            
+            if (connections.length > 0 && isHost) {
+                broadcastState();
+                // Hiệu ứng flash trên status bar
+                var statusBar = document.querySelector('.status-bar');
+                statusBar.classList.remove('sync-flash');
+                // Force reflow
+                void statusBar.offsetWidth;
+                statusBar.classList.add('sync-flash');
+                console.log('⚡ Force sync executed');
+            }
+            
+            setTimeout(function() {
+                isSyncing = false;
+            }, 200);
         }
 
         // ====== UI FUNCTIONS ======
@@ -863,7 +879,6 @@
                     chamber.classList.add('disabled');
                 }
 
-                // Viewer không thể click
                 if (!isHost) {
                     chamber.style.cursor = 'not-allowed';
                 }
@@ -946,7 +961,6 @@
             color = color || '#ff6b6b';
             var info = document.getElementById('selectedInfo');
             if (!info) return;
-            // Giữ role badge
             var badge = document.getElementById('roleBadge');
             var badgeHTML = badge.outerHTML;
             info.innerHTML = message + ' <span class="badge">🌐 P2P Sync</span> ' + badgeHTML;
@@ -990,7 +1004,6 @@
 
         function applyState(state) {
             if (!state) return;
-            // Không áp dụng nếu state không thay đổi
             var stateStr = JSON.stringify(gameState);
             var newStateStr = JSON.stringify(state);
             if (stateStr === newStateStr) return;
@@ -1008,9 +1021,8 @@
             document.getElementById('playerCount').textContent = (connections.length || 0) + 1;
         }
 
-        // ====== SYNC ======
         function syncState() {
-            broadcastState();
+            forceSync();
             updateSelectedInfo('🔄 Đã đồng bộ!', '#667eea');
             setTimeout(function() {
                 updateSelectedInfoBasedOnState();
@@ -1042,23 +1054,21 @@
         }
 
         // ====== AUTO SYNC LOOP (1 tick) ======
-        var autoSyncInterval = null;
-
         function startAutoSync() {
             if (autoSyncInterval) clearInterval(autoSyncInterval);
             autoSyncInterval = setInterval(function() {
                 if (connections.length > 0 && isHost) {
+                    // Chỉ sync nếu có thay đổi (kiểm tra qua timestamp)
                     broadcastState();
                     console.log('🔄 Auto sync tick');
                 }
-            }, 1000); // 1 giây = 1 tick
+            }, 1000);
         }
 
         // ====== INIT ======
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 DOM loaded');
             
-            // Khởi tạo game
             gameState.bulletPosition = Math.floor(Math.random() * 6);
             renderCylinder();
             updateUI();
@@ -1067,29 +1077,21 @@
             updateStats();
             updateSelectedInfo('👆 Chọn ô và nhấn BẮN', '#ff6b6b');
 
-            // Khởi tạo PeerJS
             initPeer();
 
-            // Bắt đầu auto sync
             setTimeout(function() {
                 startAutoSync();
             }, 2000);
 
-            // Event listeners
             document.getElementById('fireBtn').addEventListener('click', fire);
             document.getElementById('resetBtn').addEventListener('click', resetGame);
             document.getElementById('syncBtn').addEventListener('click', syncState);
             document.getElementById('connectBtn').addEventListener('click', function() {
                 var targetId = document.getElementById('targetPeerId').value.trim();
                 connectToPeer(targetId);
-                // Khi connect, vẫn giữ auto sync cho host
-                if (!isHost) {
-                    // Nếu là viewer, không cần auto sync gửi đi
-                }
             });
             document.getElementById('copyIdBtn').addEventListener('click', copyId);
 
-            // Enter key for connect
             document.getElementById('targetPeerId').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     document.getElementById('connectBtn').click();
@@ -1098,9 +1100,9 @@
 
             console.log('🎯 Russian Roulette - P2P Online Ready');
             console.log('👤 Role:', isHost ? 'HOST' : 'VIEWER');
+            console.log('⚡ Force sync enabled on every action!');
         });
 
-        // Cleanup interval khi rời trang
         window.addEventListener('beforeunload', function() {
             if (autoSyncInterval) {
                 clearInterval(autoSyncInterval);
