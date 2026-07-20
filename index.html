@@ -3,350 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Russian Roulette - Realtime</title>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
-            signOut, 
-            onAuthStateChanged,
-            updateProfile
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { 
-            getDatabase, 
-            ref, 
-            push, 
-            set, 
-            onValue,
-            get,
-            update,
-            onDisconnect,
-            query,
-            orderByChild,
-            limitToLast
-        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC3CsSflrXTIOCZL_vegHh3LI6nA1MBvDY",
-            authDomain: "thetfast.firebaseapp.com",
-            projectId: "thetfast",
-            storageBucket: "thetfast.firebasestorage.app",
-            messagingSenderId: "145675398519",
-            appId: "1:145675398519:web:80e9959338e6ccd3aec572"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
-
-        window.firebase = { 
-            auth, database, 
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
-            signOut, onAuthStateChanged, 
-            ref, push, set, onValue, get, update,
-            updateProfile, onDisconnect,
-            query, orderByChild, limitToLast
-        };
-    </script>
-
+    <title>Russian Roulette · Băng đạn đồng bộ</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #0b0a1a 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(255, 107, 107, 0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 50%, rgba(102, 126, 234, 0.07) 0%, transparent 60%);
+            z-index: 0;
+            animation: backgroundMove 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(2%, 2%) rotate(3deg); }
+        }
+
         .container {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 20px;
-            max-width: 1100px;
+            position: relative;
+            z-index: 1;
+            background: rgba(20, 20, 40, 0.7);
+            backdrop-filter: blur(16px);
+            border-radius: 40px;
+            padding: 35px;
+            max-width: 850px;
             width: 100%;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        
+
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 25px;
+            gap: 20px;
             flex-wrap: wrap;
-            gap: 10px;
         }
+
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 20px;
         }
+
         .header-image {
-            width: 44px;
-            height: 44px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            border: 2px solid rgba(255,107,107,0.4);
             object-fit: cover;
+            border: 3px solid rgba(255, 107, 107, 0.5);
+            box-shadow: 0 5px 30px rgba(255, 107, 107, 0.2);
+            transition: all 0.4s;
+            background: #1a1a2e;
         }
-        .header-left h1 {
-            font-size: 1.3rem;
+
+        .header-image:hover {
+            transform: scale(1.05) rotate(-5deg);
+            border-color: #ff6b6b;
+            box-shadow: 0 8px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        h1 {
+            font-size: 2.2rem;
             font-weight: 800;
             background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1.2;
         }
-        .header-left .sub {
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.4);
-            background: rgba(255,255,255,0.06);
-            padding: 2px 10px;
-            border-radius: 12px;
-        }
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
-        .user-name {
-            color: rgba(255,255,255,0.8);
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .user-role {
-            font-size: 0.6rem;
-            padding: 2px 10px;
-            border-radius: 12px;
-            background: rgba(255,215,0,0.12);
-            color: #ffd93d;
-        }
-        .btn-login {
-            padding: 5px 14px;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-        .btn-logout {
-            padding: 4px 12px;
-            border: 1px solid rgba(255,107,107,0.25);
-            border-radius: 16px;
-            background: rgba(255,107,107,0.08);
-            color: #ff6b6b;
-            font-weight: 600;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-        .badge-live {
-            font-size: 0.55rem;
-            color: #6bcb77;
-            background: rgba(107,203,119,0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(107,203,119,0.1);
-            animation: pulse 2s infinite;
-        }
-        .badge-online {
-            font-size: 0.6rem;
-            color: #6bcb77;
-            background: rgba(107,203,119,0.06);
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 18px;
-        }
-        @media (max-width: 768px) {
-            .main-grid { grid-template-columns: 1fr; }
+        .subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 5px 16px;
+            border-radius: 30px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .status-bar {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 16px 22px;
+            margin-bottom: 20px;
             display: flex;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            padding: 8px 14px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255,255,255,0.04);
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
         }
+
         .status-item {
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.4);
+            gap: 10px;
+            font-size: 1rem;
         }
-        .status-item .val {
+
+        .status-item .label {
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+        }
+
+        .status-item .value {
+            font-weight: bold;
+            font-size: 1.2rem;
             color: #fff;
-            font-weight: 600;
         }
+
         .bullet-status {
-            padding: 2px 12px;
-            border-radius: 12px;
+            padding: 6px 18px;
+            border-radius: 30px;
             font-weight: 600;
-            font-size: 0.7rem;
-        }
-        .bullet-status.waiting {
-            background: rgba(255,217,61,0.12);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            background: rgba(255, 217, 61, 0.12);
             color: #ffd93d;
-            border: 1px solid rgba(255,217,61,0.1);
-            animation: pulse 1.5s infinite;
+            border: 1px solid rgba(255, 217, 61, 0.15);
+            box-shadow: 0 0 12px rgba(255, 217, 61, 0.05);
         }
-        .bullet-status.selected {
-            background: rgba(102,126,234,0.15);
-            color: #a8b8ff;
-            border: 1px solid rgba(102,126,234,0.15);
-        }
+
         .bullet-status.safe {
-            background: rgba(107,203,119,0.12);
+            background: rgba(107, 203, 119, 0.18);
             color: #6bcb77;
-            border: 1px solid rgba(107,203,119,0.1);
+            border-color: rgba(107, 203, 119, 0.2);
+            box-shadow: 0 0 20px rgba(107, 203, 119, 0.08);
         }
+
         .bullet-status.danger {
-            background: rgba(255,107,107,0.12);
+            background: rgba(255, 107, 107, 0.2);
             color: #ff6b6b;
-            border: 1px solid rgba(255,107,107,0.1);
+            border-color: rgba(255, 107, 107, 0.25);
             animation: pulse 1s infinite;
+        }
+
+        .bullet-status.waiting {
+            background: rgba(255, 217, 61, 0.12);
+            color: #ffd93d;
+            border-color: rgba(255, 217, 61, 0.15);
+            animation: pulse 1.6s infinite;
+        }
+
+        .bullet-status.selected {
+            background: rgba(102, 126, 234, 0.2);
+            color: #a8b8ff;
+            border-color: rgba(102, 126, 234, 0.25);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.08);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .selected-info {
             text-align: center;
-            padding: 6px 12px;
-            margin: 6px 0;
-            background: rgba(255,107,107,0.05);
-            border-radius: 8px;
-            border: 2px solid rgba(255,107,107,0.12);
-            color: rgba(255,255,255,0.8);
-            font-size: 0.85rem;
+            padding: 14px 20px;
+            margin: 15px 0;
+            background: rgba(255, 107, 107, 0.06);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 107, 107, 0.15);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
             font-weight: 500;
-            min-height: 34px;
+            min-height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .remaining-info {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .remaining-info span {
+            color: #ffd93d;
+            font-weight: bold;
+            font-size: 1.4rem;
+            margin: 0 4px;
         }
 
         .cylinder-wrapper {
-            max-width: 340px;
-            margin: 10px auto;
-            padding: 14px;
-            background: rgba(0,0,0,0.25);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.04);
+            position: relative;
+            max-width: 420px;
+            margin: 25px auto;
+            padding: 25px 20px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         .cylinder {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            gap: 18px;
+            padding: 5px;
         }
+
         .chamber {
             aspect-ratio: 1;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
-            border: 2px solid rgba(255,255,255,0.08);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01));
+            border: 2px solid rgba(255, 255, 255, 0.08);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            font-size: 2rem;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 -3px 8px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            transition: all 0.3s;
-            gap: 2px;
+            user-select: none;
+            background: radial-gradient(circle at 40% 40%, rgba(50, 50, 80, 0.4), rgba(10, 10, 20, 0.6));
         }
-        .chamber:hover:not(.disabled):not(.removed) {
-            transform: scale(1.06);
-            border-color: rgba(255,107,107,0.3);
-        }
-        .chamber .num {
+
+        .chamber::before {
+            content: '';
             position: absolute;
-            top: -6px;
+            inset: 2px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.04), transparent);
+            pointer-events: none;
+        }
+
+        .chamber:hover:not(.disabled):not(.removed) {
+            transform: scale(1.07);
+            border-color: rgba(255, 107, 107, 0.4);
+            box-shadow: 0 8px 30px rgba(255, 107, 107, 0.15);
+        }
+
+        .chamber .chamber-number {
+            position: absolute;
+            top: 4px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 0.6rem;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255, 255, 255, 0.25);
             font-weight: 700;
-            background: rgba(0,0,0,0.3);
-            padding: 0 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-            min-width: 18px;
-            text-align: center;
-            z-index: 2;
-        }
-        .chamber .icon {
-            font-size: 1.3rem;
-            opacity: 0.5;
             transition: all 0.3s;
-            line-height: 1;
+            letter-spacing: 0.5px;
         }
-        .chamber:hover .icon { opacity: 0.8; }
-        .chamber .dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.3s;
-        }
+
         .chamber .bullet-dot {
-            width: 22px;
-            height: 22px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: radial-gradient(circle at 40% 40%, #ff6b6b, #c0392b);
-            box-shadow: 0 0 30px rgba(255,0,0,0.4);
+            background: radial-gradient(circle at 40% 40%, #ff6b6b, #b71c1c);
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.6), inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s;
             animation: bulletPulse 1.2s ease-in-out infinite;
         }
-        @keyframes bulletPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+        @keyframes bulletPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+
+        .chamber .empty-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.5s;
+        }
+
+        .chamber .chamber-icon {
+            font-size: 1.5rem;
+            opacity: 0.2;
+            transition: all 0.3s;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .chamber:hover .chamber-icon {
+            opacity: 0.4;
+        }
+
         .chamber.selected {
-            border-color: rgba(102,126,234,0.5);
-            box-shadow: 0 0 30px rgba(102,126,234,0.12);
-            transform: scale(1.06);
-            background: radial-gradient(circle at 30% 30%, rgba(102,126,234,0.06), rgba(102,126,234,0.01));
+            border-color: rgba(102, 126, 234, 0.7);
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.2), inset 0 0 30px rgba(102, 126, 234, 0.05);
+            transform: scale(1.08);
+            animation: glowBlue 1.5s ease-in-out infinite;
+            background: radial-gradient(circle at 30% 30%, rgba(102, 126, 234, 0.15), rgba(102, 126, 234, 0.02));
         }
+
+        @keyframes glowBlue {
+            0%, 100% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.15), inset 0 0 20px rgba(102, 126, 234, 0.03); }
+            50% { box-shadow: 0 0 55px rgba(102, 126, 234, 0.25), inset 0 0 30px rgba(102, 126, 234, 0.05); }
+        }
+
         .chamber.fired {
-            border-color: rgba(107,203,119,0.25);
-            background: radial-gradient(circle at 30% 30%, rgba(107,203,119,0.04), rgba(107,203,119,0.01));
+            border-color: rgba(107, 203, 119, 0.4);
+            box-shadow: 0 0 30px rgba(107, 203, 119, 0.1);
+            background: radial-gradient(circle at 30% 30%, rgba(107, 203, 119, 0.08), rgba(107, 203, 119, 0.01));
         }
-        .chamber.fired .icon { color: #6bcb77; opacity: 0.8; }
+
         .chamber.exploded {
-            border-color: rgba(255,107,107,0.5);
-            box-shadow: 0 0 40px rgba(255,107,107,0.15);
-            animation: explode 0.5s ease-out;
-            background: radial-gradient(circle at 30% 30%, rgba(255,107,107,0.1), rgba(255,107,107,0.03));
+            border-color: rgba(255, 107, 107, 0.9);
+            box-shadow: 0 0 60px rgba(255, 107, 107, 0.5);
+            animation: explode 0.6s ease-out;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.25), rgba(255, 107, 107, 0.05));
         }
-        .chamber.exploded .icon { color: #ff6b6b; opacity: 1; }
-        @keyframes explode {
-            0%{transform:scale(1)}
-            30%{transform:scale(1.2)}
-            60%{transform:scale(0.9)}
-            100%{transform:scale(1)}
-        }
+
         .chamber.removed {
             transform: scale(0) rotate(180deg);
             opacity: 0;
@@ -359,518 +358,293 @@
             height: 0;
             aspect-ratio: unset;
         }
+
         .chamber.removing {
-            animation: removeAnim 0.4s ease-in forwards;
+            animation: removeAnimation 0.6s ease-in forwards;
         }
-        @keyframes removeAnim {
-            0%{transform:scale(1);opacity:1}
-            100%{transform:scale(0) rotate(180deg);opacity:0}
+
+        @keyframes removeAnimation {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            40% {
+                transform: scale(0.6) rotate(60deg);
+                opacity: 0.6;
+                border-color: rgba(107, 203, 119, 0.5);
+                background: radial-gradient(circle at 30% 30%, rgba(107, 203, 119, 0.12), rgba(107, 203, 119, 0.02));
+            }
+            100% {
+                transform: scale(0) rotate(180deg);
+                opacity: 0;
+            }
         }
+
         .chamber.disabled {
             cursor: not-allowed;
-            opacity: 0.2;
+            opacity: 0.35;
         }
-        .chamber .hint {
+
+        .chamber .click-hint {
             position: absolute;
-            bottom: 2px;
+            bottom: 4px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 0.4rem;
-            color: rgba(255,255,255,0.1);
+            font-size: 0.45rem;
+            color: rgba(255, 255, 255, 0.15);
             opacity: 0;
             transition: opacity 0.3s;
             white-space: nowrap;
-        }
-        .chamber:hover .hint { opacity: 1; }
-        .cylinder-label {
-            text-align: center;
-            color: rgba(255,255,255,0.08);
-            font-size: 0.5rem;
             font-weight: 600;
-            margin-top: 6px;
-            letter-spacing: 2px;
-        }
-        .remaining-info {
-            text-align: center;
-            padding: 4px;
-            margin: 4px 0;
-            color: rgba(255,255,255,0.3);
-            font-size: 0.7rem;
-        }
-        .remaining-info span {
-            color: #ffd93d;
-            font-weight: 700;
-            font-size: 0.9rem;
         }
 
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 8px 0;
+        .chamber:hover .click-hint {
+            opacity: 1;
         }
-        .btn-fire {
-            padding: 10px 32px;
-            font-size: 0.9rem;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: #fff;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 25px rgba(255,107,107,0.2);
-            transition: all 0.3s;
+
+        @keyframes explode {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.3); background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.3), rgba(255, 107, 107, 0.05)); }
+            60% { transform: scale(0.9); }
+            100% { transform: scale(1); }
         }
-        .btn-fire:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 35px rgba(255,107,107,0.3);
+
+        .history {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            min-height: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
         }
-        .btn-fire:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        .btn-secondary {
-            padding: 8px 18px;
-            background: rgba(255,255,255,0.05);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 0.75rem;
+
+        .history h3 {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
             font-weight: 600;
+            letter-spacing: 1px;
         }
-        .btn-secondary:hover:not(:disabled) {
-            background: rgba(255,255,255,0.1);
+
+        .history-log {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
-        .btn-secondary:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
+
+        .log-entry {
+            padding: 5px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .log-entry.safe {
+            background: rgba(107, 203, 119, 0.12);
+            color: #6bcb77;
+            border: 1px solid rgba(107, 203, 119, 0.1);
+        }
+
+        .log-entry.danger {
+            background: rgba(255, 107, 107, 0.12);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.1);
         }
 
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            padding: 8px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.03);
-            margin: 6px 0;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
-        .stat-item { text-align: center; }
-        .stat-item .val {
-            font-size: 1.1rem;
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .stat-value {
+            font-size: 2rem;
             font-weight: 800;
             background: linear-gradient(135deg, #ffd93d, #ff6b6b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .stat-item .label {
-            font-size: 0.55rem;
-            color: rgba(255,255,255,0.25);
-            margin-top: 1px;
-        }
 
-        .history {
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            padding: 6px 10px;
-            margin: 4px 0;
-            border: 1px solid rgba(255,255,255,0.03);
-            max-height: 44px;
-            overflow-y: auto;
+        .stat-item .stat-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 4px;
+            font-weight: 500;
         }
-        .history h4 {
-            color: rgba(255,255,255,0.2);
-            font-size: 0.55rem;
-            margin-bottom: 2px;
-            letter-spacing: 1px;
-        }
-        .history-log {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-        }
-        .log-entry {
-            padding: 1px 7px;
-            border-radius: 8px;
-            font-size: 0.55rem;
-            font-weight: 600;
-        }
-        .log-entry.safe {
-            background: rgba(107,203,119,0.08);
-            color: #6bcb77;
-        }
-        .log-entry.danger {
-            background: rgba(255,107,107,0.08);
-            color: #ff6b6b;
-        }
-        .history::-webkit-scrollbar { width: 2px; }
-        .history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
 
         .game-over {
             text-align: center;
-            padding: 10px;
-            margin: 6px 0;
-            border-radius: 10px;
-            font-size: 1rem;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 20px;
+            font-size: 1.4rem;
             font-weight: 700;
+            animation: slideIn 0.5s ease-out;
+            backdrop-filter: blur(10px);
         }
+
         .game-over.win {
-            background: rgba(107,203,119,0.08);
-            border: 2px solid rgba(107,203,119,0.12);
+            background: rgba(107, 203, 119, 0.12);
+            border: 2px solid rgba(107, 203, 119, 0.2);
             color: #6bcb77;
         }
+
         .game-over.lose {
-            background: rgba(255,107,107,0.08);
-            border: 2px solid rgba(255,107,107,0.12);
+            background: rgba(255, 107, 107, 0.12);
+            border: 2px solid rgba(255, 107, 107, 0.2);
             color: #ff6b6b;
         }
 
-        .bet-section {
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.04);
-        }
-        .bet-section h4 {
-            color: rgba(255,255,255,0.35);
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        .bet-balance {
+        .controls {
             display: flex;
-            justify-content: space-between;
-            padding: 4px 10px;
-            background: rgba(255,217,61,0.04);
-            border-radius: 6px;
-            border: 1px solid rgba(255,217,61,0.06);
-            margin-bottom: 6px;
-        }
-        .bet-balance span { color: rgba(255,255,255,0.5); font-size: 0.75rem; }
-        .bet-balance .balance-value { color: #ffd93d; font-weight: 700; font-size: 1rem; }
-        .bet-amount {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
-        }
-        .bet-amount input {
-            flex: 1;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.06);
-            background: rgba(255,255,255,0.04);
-            color: #fff;
-            font-size: 0.8rem;
-            outline: none;
-            min-width: 50px;
-        }
-        .bet-amount input:focus { border-color: rgba(102,126,234,0.2); }
-        .bet-presets { display: flex; gap: 3px; }
-        .bet-presets button {
-            padding: 3px 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 4px;
-            background: rgba(255,255,255,0.03);
-            color: rgba(255,255,255,0.4);
-            font-size: 0.6rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .bet-presets button:hover { background: rgba(255,255,255,0.08); color: #fff; }
-        .bet-actions { display: flex; gap: 4px; }
-        .bet-actions button {
-            flex: 1;
-            padding: 6px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.7rem;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        .bet-actions .btn-bet {
-            background: linear-gradient(135deg, #ffd93d, #f7971e);
-            color: #1a1a2e;
-        }
-        .bet-actions .btn-bet:hover:not(:disabled) { transform: translateY(-1px); }
-        .bet-actions .btn-bet:disabled { opacity: 0.3; cursor: not-allowed; }
-        .bet-actions .btn-cancel {
-            background: rgba(255,255,255,0.06);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .bet-result {
-            text-align: center;
-            padding: 4px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 4px;
-            min-height: 26px;
-            display: flex;
-            align-items: center;
+            gap: 15px;
             justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
         }
-        .bet-result.win { background: rgba(107,203,119,0.08); color: #6bcb77; }
-        .bet-result.lose { background: rgba(255,107,107,0.08); color: #ff6b6b; }
-        .bet-result.draw { background: rgba(255,217,61,0.06); color: #ffd93d; }
-        .bet-result.waiting { background: rgba(102,126,234,0.06); color: #a8b8ff; }
-        .bet-history {
-            margin-top: 4px;
-            max-height: 50px;
-            overflow-y: auto;
-        }
-        .bet-history::-webkit-scrollbar { width: 2px; }
-        .bet-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .bet-history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 1px 6px;
-            font-size: 0.6rem;
-            color: rgba(255,255,255,0.3);
-        }
-        .bet-history-item.win { color: #6bcb77; }
-        .bet-history-item.lose { color: #ff6b6b; }
 
-        .reward-section {
-            background: rgba(255,215,0,0.04);
-            border-radius: 12px;
-            padding: 8px 14px;
-            border: 1px solid rgba(255,215,0,0.06);
-            margin-top: 8px;
-        }
-        .reward-section h4 {
-            color: rgba(255,215,0,0.5);
-            font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-        .reward-input-group {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-        .reward-input-group input {
-            flex: 1;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,215,0,0.1);
-            background: rgba(255,215,0,0.04);
-            color: #ffd93d;
-            font-size: 0.8rem;
-            outline: none;
-            font-weight: 600;
-        }
-        .reward-input-group input:focus { border-color: rgba(255,215,0,0.3); }
-        .reward-input-group .reward-label { color: rgba(255,215,0,0.4); font-size: 0.65rem; font-weight: 600; }
-        .reward-display {
-            text-align: center;
-            padding: 4px;
-            margin-top: 4px;
-            color: #ffd93d;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .reward-display span { color: #6bcb77; font-size: 0.85rem; }
-
-        .chat-box {
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            flex-direction: column;
-            height: 400px;
-            margin-top: 8px;
-        }
-        .chat-header {
-            padding: 8px 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .chat-header h3 {
-            color: rgba(255,255,255,0.4);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .chat-messages {
-            flex: 1;
-            padding: 8px 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            min-height: 0;
-        }
-        .chat-messages::-webkit-scrollbar { width: 3px; }
-        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .message {
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            animation: messageIn 0.3s ease-out;
-            max-width: 95%;
-            word-wrap: break-word;
-        }
-        @keyframes messageIn { from{transform:translateY(-6px);opacity:0} to{transform:translateY(0);opacity:1} }
-        .message.system {
-            background: rgba(255,217,61,0.04);
-            color: #ffd93d;
-            border: 1px solid rgba(255,217,61,0.04);
-            text-align: center;
-            font-size: 0.65rem;
-            align-self: center;
-            max-width: 80%;
-        }
-        .message .msg-user {
-            color: #a8b8ff;
-            font-weight: 600;
-            margin-right: 4px;
-            font-size: 0.7rem;
-        }
-        .message .msg-time {
-            color: rgba(255,255,255,0.12);
-            font-size: 0.5rem;
-            margin-left: 4px;
-        }
-        .message.user-msg {
-            background: rgba(102,126,234,0.08);
-            border: 1px solid rgba(102,126,234,0.04);
-            align-self: flex-start;
-            color: rgba(255,255,255,0.8);
-        }
-        .message.self-msg {
-            background: rgba(107,203,119,0.06);
-            border: 1px solid rgba(107,203,119,0.04);
-            align-self: flex-end;
-            color: rgba(255,255,255,0.8);
-        }
-        .chat-input {
-            padding: 6px 12px;
-            border-top: 1px solid rgba(255,255,255,0.04);
-            display: flex;
-            gap: 6px;
-        }
-        .chat-input input {
-            flex: 1;
-            padding: 5px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.04);
-            background: rgba(255,255,255,0.03);
-            color: #fff;
-            font-size: 0.75rem;
-            outline: none;
-        }
-        .chat-input input::placeholder { color: rgba(255,255,255,0.15); }
-        .chat-input input:focus { border-color: rgba(102,126,234,0.15); background: rgba(255,255,255,0.05); }
-        .chat-input button {
-            padding: 5px 14px;
+        .btn {
+            padding: 14px 40px;
             border: none;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            font-weight: 600;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .chat-input button:hover:not(:disabled) { transform: scale(1.05); }
-        .chat-input button:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        .auth-modal {
-            display: none;
-            position: fixed;
-            top:0;left:0;width:100%;height:100%;
-            background: rgba(0,0,0,0.7);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             backdrop-filter: blur(10px);
-            z-index:1000;
-            justify-content:center;
-            align-items:center;
         }
-        .auth-modal.active { display: flex; }
-        .auth-box {
-            background: rgba(255,255,255,0.06);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 380px;
-            width:100%;
-            border:1px solid rgba(255,255,255,0.08);
-            position:relative;
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
         }
-        .auth-box h2 {
-            color:#fff;
-            font-size:1.4rem;
-            text-align:center;
-            background:linear-gradient(135deg,#ffd93d,#ff6b6b);
-            -webkit-background-clip:text;
-            -webkit-text-fill-color:transparent;
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .auth-box .auth-sub {
-            color:rgba(255,255,255,0.3);
-            text-align:center;
-            font-size:0.8rem;
-            margin-bottom:16px;
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
         }
-        .auth-box input {
-            width:100%;
-            padding:8px 12px;
-            border-radius:10px;
-            border:1px solid rgba(255,255,255,0.06);
-            background:rgba(255,255,255,0.04);
-            color:#fff;
-            font-size:0.85rem;
-            outline:none;
-            margin-bottom:8px;
+
+        .cylinder-label {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 14px;
+            letter-spacing: 3px;
         }
-        .auth-box input:focus { border-color:rgba(102,126,234,0.3); }
-        .auth-box input::placeholder { color:rgba(255,255,255,0.2); }
-        .auth-box .auth-btn {
-            width:100%;
-            padding:8px;
-            border:none;
-            border-radius:10px;
-            background:linear-gradient(135deg,#667eea,#764ba2);
-            color:#fff;
-            font-size:0.9rem;
-            font-weight:700;
-            cursor:pointer;
+
+        .fire-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0 8px;
         }
-        .auth-box .auth-btn:hover { transform:translateY(-1px); }
-        .auth-box .auth-error {
-            color:#ff6b6b;
-            font-size:0.75rem;
-            text-align:center;
-            margin-top:6px;
-            min-height:18px;
+
+        .btn-fire {
+            padding: 18px 60px;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #ff6b6b, #d63031);
+            color: #fff;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 30px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        .auth-box .auth-close {
-            position:absolute;
-            top:12px;right:16px;
-            color:rgba(255,255,255,0.2);
-            font-size:1.3rem;
-            cursor:pointer;
-            background:none;
-            border:none;
+
+        .btn-fire:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 45px rgba(255, 107, 107, 0.4);
         }
-        .auth-box .auth-switch {
-            color:rgba(255,255,255,0.25);
-            font-size:0.75rem;
-            text-align:center;
-            margin-top:10px;
+
+        .btn-fire:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
         }
-        .auth-box .auth-switch span {
-            color:#667eea;
-            cursor:pointer;
-            font-weight:600;
+
+        .btn-fire .fire-icon {
+            display: inline-block;
+            animation: fireIcon 0.5s ease-in-out infinite alternate;
+            margin-right: 10px;
+        }
+
+        @keyframes fireIcon {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(6deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            .header-image {
+                width: 60px;
+                height: 60px;
+            }
+            .cylinder-wrapper {
+                padding: 15px;
+            }
+            .cylinder {
+                gap: 12px;
+            }
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .stats {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 8px;
+                padding: 10px;
+            }
+            .stat-item .stat-value {
+                font-size: 1.5rem;
+            }
+            .btn-fire {
+                padding: 15px 40px;
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
@@ -878,1146 +652,371 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <img src="a.png" class="header-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Ccircle cx=%2240%22 cy=%2240%22 r=%2238%22 fill=%22%23302b63%22/%3E%3Ctext x=%2240%22 y=%2248%22 text-anchor=%22middle%22 font-size=%2232%22 fill=%22%23ff6b6b%22%3E🔫%3C/text%3E%3C/svg%3E'">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%231a1a2e'/%3E%3Ctext x='40' y='50' text-anchor='middle' font-size='34' fill='%23ff6b6b'%3E🔫%3C/text%3E%3C/svg%3E" alt="Russian Roulette" class="header-image">
                 <div>
-                    <h1>🔫 Russian Roulette</h1>
-                    <span class="sub">🎯 Realtime Sync</span>
+                    <h1>🔫 Đạn</h1>
+                    <span class="subtitle">🎯 6 vị trí · 1 viên · 5 lượt</span>
                 </div>
-            </div>
-            <div class="user-section" id="userSection">
-                <div id="userInfo" style="display:none; align-items:center; gap:6px;">
-                    <div class="user-avatar" id="userAvatar">A</div>
-                    <span class="user-name" id="userName">User</span>
-                    <span class="user-role" id="userRole">🎮 Player</span>
-                    <button class="btn-logout" id="logoutBtn">Đăng xuất</button>
-                </div>
-                <button class="btn-login" id="loginBtn">🔑 Đăng nhập</button>
-                <span class="badge-online" id="onlineCount">🟢 0</span>
-                <span class="badge-live">🔄 LIVE</span>
             </div>
         </div>
 
-        <div class="main-grid">
-            <div class="left-column">
-                <div class="status-bar">
-                    <div class="status-item">
-                        <span>📊 Lượt:</span>
-                        <span class="val" id="turnDisplay">0/5</span>
-                    </div>
-                    <div class="status-item">
-                        <span>📌 Trạng thái:</span>
-                        <span class="bullet-status waiting" id="statusDisplay">🟡 Chọn ô</span>
-                    </div>
-                    <div class="status-item">
-                        <span>🎯 Xác suất:</span>
-                        <span class="val" id="probabilityDisplay">16.7%</span>
-                    </div>
-                </div>
-
-                <div class="selected-info" id="selectedInfo">👆 Chọn ô → Nhấn BẮN</div>
-
-                <div class="cylinder-wrapper">
-                    <div class="cylinder" id="cylinder"></div>
-                    <div class="cylinder-label">▼ Ổ QUAY 6 VỊ TRÍ ▼</div>
-                </div>
-
-                <div class="remaining-info">📦 Ô còn lại: <span id="remainingCount">6</span></div>
-
-                <div class="controls">
-                    <button class="btn-fire" id="fireBtn" disabled>🔫 BẮN</button>
-                    <button class="btn-secondary" id="resetBtn" disabled>🔄 Mới</button>
-                </div>
-
-                <div class="stats">
-                    <div class="stat-item"><div class="val" id="winCount">0</div><div class="label">🏆 Thắng</div></div>
-                    <div class="stat-item"><div class="val" id="loseCount">0</div><div class="label">💀 Thua</div></div>
-                    <div class="stat-item"><div class="val" id="totalGames">0</div><div class="label">🎮 Tổng</div></div>
-                </div>
-
-                <div class="history">
-                    <h4>📜 Lịch sử</h4>
-                    <div class="history-log" id="historyLog"><span style="color:rgba(255,255,255,0.08);font-size:0.6rem;">Chưa có</span></div>
-                </div>
-
-                <div id="gameOverMessage" style="display:none;"></div>
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="label">📊 Lượt:</span>
+                <span class="value" id="turnDisplay">0/5</span>
             </div>
-
-            <div class="right-column">
-                <div class="bet-section">
-                    <h4 id="betHeader">💰 HỆ THỐNG CƯỢC</h4>
-                    <div class="bet-balance">
-                        <span>💰 Số dư:</span>
-                        <span class="balance-value" id="balanceDisplay">1,000,000,000</span>
-                    </div>
-                    <div class="bet-amount">
-                        <input type="number" id="betAmount" placeholder="Số tiền" min="10" value="100" disabled>
-                        <div class="bet-presets">
-                            <button data-amount="50" disabled>50</button>
-                            <button data-amount="100" disabled>100</button>
-                            <button data-amount="500" disabled>500</button>
-                            <button data-amount="1000" disabled>1K</button>
-                        </div>
-                    </div>
-                    <div class="bet-actions">
-                        <button class="btn-bet" id="betBtn" disabled>🎯 Đặt</button>
-                        <button class="btn-cancel" id="cancelBetBtn" disabled>❌ Hủy</button>
-                    </div>
-                    <div class="bet-result" id="betResult"></div>
-                    <div class="bet-history" id="betHistory"><div class="bet-history-item" style="justify-content:center;color:rgba(255,255,255,0.15);">Chưa có lịch sử</div></div>
-                </div>
-
-                <div class="reward-section" id="rewardSection">
-                    <h4>🏆 TIỀN THƯỞNG</h4>
-                    <div class="reward-input-group">
-                        <span class="reward-label">💰</span>
-                        <input type="number" id="rewardAmount" placeholder="Nhập tiền thưởng..." min="0" value="500" disabled>
-                        <span class="reward-label">đ</span>
-                    </div>
-                    <div class="reward-display">🎯 Thưởng: <span id="rewardValue">500</span>đ khi sống sót 5 lượt</div>
-                </div>
-
-                <div class="chat-box">
-                    <div class="chat-header">
-                        <h3>💬 Bình luận</h3>
-                        <span class="badge-online" id="chatOnline">🟢 0</span>
-                    </div>
-                    <div class="chat-messages" id="chatMessages"></div>
-                    <div class="chat-input">
-                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." maxlength="100">
-                        <button id="sendBtn">Gửi</button>
-                    </div>
-                </div>
+            <div class="status-item">
+                <span class="label">📌 Trạng thái:</span>
+                <span class="bullet-status waiting" id="statusDisplay">🟡 Chọn ô</span>
             </div>
+            <div class="status-item">
+                <span class="label">🎯 Xác suất:</span>
+                <span class="value" id="probabilityDisplay">16.7%</span>
+            </div>
+        </div>
+
+        <div class="selected-info" id="selectedInfo">
+            👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN
+        </div>
+
+        <div class="remaining-info">
+            📦 Ô còn lại: <span id="remainingCount">6</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="winCount">0</div>
+                <div class="stat-label">🏆 Thắng</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="loseCount">0</div>
+                <div class="stat-label">💀 Thua</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalGames">0</div>
+                <div class="stat-label">🎮 Tổng ván</div>
+            </div>
+        </div>
+
+        <div class="cylinder-wrapper">
+            <div class="cylinder" id="cylinder"></div>
+            <div class="cylinder-label">▼ Ổ QUAY 6 VỊ TRÍ ▼</div>
+        </div>
+
+        <div class="fire-btn-container">
+            <button class="btn-fire" id="fireBtn">
+                <span class="fire-icon">🔫</span> BẮN
+            </button>
+        </div>
+
+        <div class="history">
+            <h3>📜 Lịch sử bóp cò</h3>
+            <div class="history-log" id="historyLog">
+                <span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động</span>
+            </div>
+        </div>
+
+        <div id="gameOverMessage" style="display: none;"></div>
+
+        <div class="controls">
+            <button class="btn btn-secondary" id="resetBtn">🔄 Ván mới</button>
         </div>
     </div>
 
-    <div class="auth-modal" id="authModal">
-        <div class="auth-box">
-            <button class="auth-close" id="authClose">✕</button>
-            <h2>🎯 Russian Roulette</h2>
-            <div class="auth-sub">Đăng nhập để chơi</div>
-            
-            <div id="loginForm">
-                <input type="email" id="loginEmail" placeholder="Email" value="a">
-                <input type="password" id="loginPassword" placeholder="Mật khẩu" value="a">
-                <button class="auth-btn" id="loginAuthBtn">🔑 Đăng nhập</button>
-                <div class="auth-error" id="authError"></div>
-                <div class="auth-switch">Chưa có tài khoản? <span id="switchToRegister">Đăng ký</span></div>
-            </div>
-
-            <div id="registerForm" style="display:none; margin-top:12px;">
-                <input type="text" id="registerDisplayName" placeholder="Tên hiển thị">
-                <input type="email" id="registerEmail" placeholder="Email">
-                <input type="password" id="registerPassword" placeholder="Mật khẩu (≥6 ký tự)">
-                <button class="auth-btn" id="registerAuthBtn">📝 Đăng ký</button>
-                <div class="auth-error" id="registerError"></div>
-                <div class="auth-switch">Đã có tài khoản? <span id="switchToLogin">Đăng nhập</span></div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        const { auth, database, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, ref, push, set, onValue, get, update, updateProfile, onDisconnect, query, orderByChild, limitToLast } = window.firebase;
-
-        // ============================================================
-        // 1. FIREBASE REFERENCES
-        // ============================================================
-        const GAME_STATE_REF = ref(database, 'gameState');
-        const MESSAGES_REF = ref(database, 'messages');
-        const ONLINE_REF = ref(database, 'online');
-
-        // ============================================================
-        // 2. AUDIO SYSTEM
-        // ============================================================
-        class SoundSystem {
-            constructor() {
-                this.ctx = null;
-                try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-            }
-            play(type) {
-                if (!this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    if (type === 'tach') {
-                        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                        o.connect(g); g.connect(this.ctx.destination);
-                        o.type = 'square'; o.frequency.setValueAtTime(800, now); o.frequency.exponentialRampToValueAtTime(400, now+0.04);
-                        g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.05);
-                        o.start(now); o.stop(now+0.05);
-                    } else if (type === 'no') {
-                        const bs = this.ctx.sampleRate * 0.4, buf = this.ctx.createBuffer(1, bs, this.ctx.sampleRate);
-                        const d = buf.getChannelData(0);
-                        for (let i=0; i<bs; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(bs*0.15));
-                        const n = this.ctx.createBufferSource(); n.buffer = buf;
-                        const gn = this.ctx.createGain(); gn.gain.setValueAtTime(0.5, now); gn.gain.exponentialRampToValueAtTime(0.001, now+0.4);
-                        n.connect(gn); gn.connect(this.ctx.destination); n.start(now); n.stop(now+0.4);
-                        const ob = this.ctx.createOscillator(), gb = this.ctx.createGain();
-                        ob.connect(gb); gb.connect(this.ctx.destination);
-                        ob.type = 'sawtooth'; ob.frequency.setValueAtTime(80, now); ob.frequency.exponentialRampToValueAtTime(20, now+0.3);
-                        gb.gain.setValueAtTime(0.4, now); gb.gain.exponentialRampToValueAtTime(0.001, now+0.3);
-                        ob.start(now); ob.stop(now+0.3);
-                    } else if (type === 'click') {
-                        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                        o.connect(g); g.connect(this.ctx.destination);
-                        o.frequency.setValueAtTime(1000, now); o.frequency.exponentialRampToValueAtTime(600, now+0.03);
-                        g.gain.setValueAtTime(0.05, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.04);
-                        o.start(now); o.stop(now+0.04);
-                    } else if (type === 'bet') {
-                        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                        o.connect(g); g.connect(this.ctx.destination);
-                        o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(1600, now+0.06);
-                        g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.08);
-                        o.start(now); o.stop(now+0.08);
-                    } else if (type === 'cash') {
-                        [523,659,784].forEach((f,i) => {
-                            const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                            o.connect(g); g.connect(this.ctx.destination);
-                            o.frequency.setValueAtTime(f, now+i*0.06);
-                            g.gain.setValueAtTime(0.05, now+i*0.06); g.gain.exponentialRampToValueAtTime(0.001, now+i*0.06+0.1);
-                            o.start(now+i*0.06); o.stop(now+i*0.06+0.1);
-                        });
-                    } else if (type === 'win') {
-                        [523,659,784,1047].forEach((f,i) => {
-                            const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                            o.connect(g); g.connect(this.ctx.destination);
-                            o.frequency.setValueAtTime(f, now+i*0.08);
-                            g.gain.setValueAtTime(0.06, now+i*0.08); g.gain.exponentialRampToValueAtTime(0.001, now+i*0.08+0.15);
-                            o.start(now+i*0.08); o.stop(now+i*0.08+0.15);
-                        });
-                    } else if (type === 'lose') {
-                        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-                        o.connect(g); g.connect(this.ctx.destination);
-                        o.type = 'sawtooth'; o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(80, now+0.4);
-                        g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.4);
-                        o.start(now); o.stop(now+0.4);
-                    }
-                } catch(e) {}
-            }
-        }
-        const sound = new SoundSystem();
-
-        // ============================================================
-        // 3. GAME CLASS
-        // ============================================================
-        class RussianRoulette {
-            constructor() {
-                this.totalChambers = 6;
-                this.maxTurns = 5;
-                
-                this.turn = 0;
-                this.bulletPosition = -1;
-                this.gameOver = false;
-                this.history = [];
-                this.selectedChamber = -1;
-                this.removedChambers = new Set();
-                this.stats = { wins: 0, loses: 0, total: 0 };
-                this.betActive = false;
-                this.betAmount = 100;
-                this.betHistory = [];
-                
-                this.currentUser = null;
-                this.balance = 1000;
-                this.isHost = false;
-                this.rewardAmount = 500;
-                this.hasReceivedReward = false;
-                
-                // Chat listener
-                this.chatListener = null;
-                
-                this.initializeGameState();
-                this.listenToGameState();
-                this.listenToChat();
-            }
-
-            initializeGameState() {
-                get(GAME_STATE_REF).then(snapshot => {
-                    if (!snapshot.exists()) {
-                        set(GAME_STATE_REF, {
-                            turn: 0,
-                            bulletPosition: Math.floor(Math.random() * 6),
-                            gameOver: false,
-                            selectedChamber: -1,
-                            removedChambers: [],
-                            history: [],
-                            stats: { wins: 0, loses: 0, total: 0 },
-                            betActive: false,
-                            betAmount: 100,
-                            betHistory: [],
-                            timestamp: Date.now()
-                        });
-                    }
-                });
-            }
-
-            listenToGameState() {
-                onValue(GAME_STATE_REF, (snapshot) => {
-                    const data = snapshot.val();
-                    if (!data) return;
-
-                    this.turn = data.turn || 0;
-                    this.bulletPosition = data.bulletPosition ?? -1;
-                    this.gameOver = data.gameOver || false;
-                    this.selectedChamber = data.selectedChamber ?? -1;
-                    this.removedChambers = new Set(data.removedChambers || []);
-                    this.history = data.history || [];
-                    this.stats = data.stats || { wins: 0, loses: 0, total: 0 };
-                    this.betActive = data.betActive || false;
-                    this.betAmount = data.betAmount || 100;
-                    this.betHistory = data.betHistory || [];
-
-                    this.updateAllUI();
-                });
-            }
-
-            // ===== CHAT FIX - DÙNG on('value') =====
-            listenToChat() {
-                // Xóa listener cũ nếu có
-                if (this.chatListener) {
-                    this.chatListener.off();
-                    this.chatListener = null;
-                }
-                
-                // Tạo query lấy 50 tin nhắn gần nhất
-                const messagesQuery = query(MESSAGES_REF, orderByChild('timestamp'), limitToLast(50));
-                this.chatListener = messagesQuery;
-                
-                // Lắng nghe thay đổi - dùng on('value')
-                onValue(messagesQuery, (snapshot) => {
-                    const data = snapshot.val();
-                    const container = document.getElementById('chatMessages');
-                    
-                    if (!data) {
-                        // Hiển thị tin nhắn chào nếu chưa có tin nhắn
-                        if (container.children.length === 0) {
-                            const welcome = document.createElement('div');
-                            welcome.className = 'message system';
-                            welcome.textContent = '💬 Chat không cần đăng nhập!';
-                            container.appendChild(welcome);
-                        }
-                        return;
-                    }
-                    
-                    // Chuyển object thành array và sắp xếp
-                    const messages = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key]
-                    })).sort((a, b) => a.timestamp - b.timestamp);
-                    
-                    // Render tin nhắn
-                    this.renderChatMessages(messages);
-                });
-            }
-
-            renderChatMessages(messages) {
-                const container = document.getElementById('chatMessages');
-                container.innerHTML = '';
-                
-                if (!messages || messages.length === 0) {
-                    const welcome = document.createElement('div');
-                    welcome.className = 'message system';
-                    welcome.textContent = '💬 Chat không cần đăng nhập!';
-                    container.appendChild(welcome);
-                    return;
-                }
-                
-                messages.forEach(msg => {
-                    const div = document.createElement('div');
-                    div.setAttribute('data-msg-id', msg.id);
-                    
-                    if (msg.type === 'system') {
-                        div.className = 'message system';
-                        div.textContent = msg.text;
-                    } else {
-                        const user = msg.user || 'Anonymous';
-                        const isSelf = user === (this.currentUser?.displayName || this.currentUser?.email || 'Anonymous');
-                        div.className = `message ${isSelf ? 'self-msg' : 'user-msg'}`;
-                        const time = new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                        div.innerHTML = `
-                            <span class="msg-user">${user}</span>
-                            <span class="msg-text">${msg.text}</span>
-                            <span class="msg-time">${time}</span>
-                        `;
-                    }
-                    container.appendChild(div);
-                });
-                
-                // Cuộn xuống tin nhắn mới nhất
-                container.scrollTop = container.scrollHeight;
-            }
-
-            updateGameState() {
-                set(GAME_STATE_REF, {
-                    turn: this.turn,
-                    bulletPosition: this.bulletPosition,
-                    gameOver: this.gameOver,
-                    selectedChamber: this.selectedChamber,
-                    removedChambers: Array.from(this.removedChambers),
-                    history: this.history,
-                    stats: this.stats,
-                    betActive: this.betActive,
-                    betAmount: this.betAmount,
-                    betHistory: this.betHistory.slice(0, 10),
-                    timestamp: Date.now()
-                });
-            }
-
-            updateAllUI() {
-                this.updateUI();
-                this.updateSelectedInfoFromSync();
-                this.updateRemainingInfo();
-                this.updateHistory();
-                this.updateStats();
-                this.updateBalance();
-                this.updateBetHistory();
-                this.updateBetUI();
-                this.updateFireButton();
-                this.updateGameOverMessage();
-                this.updateRewardUI();
-            }
-
-            updateUI() {
-                document.getElementById('turnDisplay').textContent = `${this.turn}/${this.maxTurns}`;
-                const remaining = this.totalChambers - this.removedChambers.size;
-                const prob = remaining > 0 ? (1 / remaining) * 100 : 0;
-                document.getElementById('probabilityDisplay').textContent = prob.toFixed(1) + '%';
-
-                const statusEl = document.getElementById('statusDisplay');
-                if (this.gameOver) {
-                    statusEl.className = this.turn === this.maxTurns ? 'bullet-status safe' : 'bullet-status danger';
-                    statusEl.textContent = this.turn === this.maxTurns ? '🏆 Thắng!' : '💀 Thua!';
-                } else if (this.selectedChamber !== -1 && !this.removedChambers.has(this.selectedChamber)) {
-                    statusEl.className = 'bullet-status selected';
-                    statusEl.textContent = `🎯 Ô ${this.selectedChamber + 1}`;
-                } else {
-                    statusEl.className = 'bullet-status waiting';
-                    statusEl.textContent = '🟡 Chọn ô';
-                }
-                this.renderCylinder();
-            }
-
-            renderCylinder() {
-                const cylinder = document.getElementById('cylinder');
-                cylinder.innerHTML = '';
-                const icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
-
-                for (let i = 0; i < this.totalChambers; i++) {
-                    const chamber = document.createElement('div');
-                    chamber.className = 'chamber';
-                    chamber.dataset.index = i;
-
-                    // Số thứ tự - luôn hiển thị
-                    const num = document.createElement('div');
-                    num.className = 'num';
-                    num.textContent = i + 1;
-                    chamber.appendChild(num);
-
-                    const isRemoved = this.removedChambers.has(i);
-                    const isSelected = this.selectedChamber === i && !this.gameOver && !isRemoved;
-                    const isBullet = this.bulletPosition === i;
-                    const isFired = this.history.some(h => h.position === i);
-
-                    // Icon
-                    const icon = document.createElement('div');
-                    icon.className = 'icon';
-                    if (isRemoved) {
-                        icon.textContent = '💨';
-                        chamber.classList.add('removed');
-                    } else if (this.gameOver && isBullet) {
-                        icon.textContent = '💥';
-                        chamber.classList.add('exploded');
-                    } else if (isFired && !isBullet) {
-                        icon.textContent = '✅';
-                        chamber.classList.add('fired');
-                    } else {
-                        icon.textContent = icons[i];
-                    }
-                    chamber.appendChild(icon);
-
-                    // Dot - luôn hiển thị cho ô chưa bị xóa
-                    if (!isRemoved) {
-                        const dot = document.createElement('div');
-                        dot.className = 'dot';
-                        chamber.appendChild(dot);
-                    }
-
-                    // Hint - luôn hiển thị cho ô chưa bị xóa
-                    if (!isRemoved) {
-                        const hint = document.createElement('div');
-                        hint.className = 'hint';
-                        hint.textContent = '👆 Chọn';
-                        chamber.appendChild(hint);
-                    }
-
-                    if (isSelected) {
-                        chamber.classList.add('selected');
-                    }
-
-                    if (this.gameOver || this.turn >= this.maxTurns || isRemoved) {
-                        chamber.classList.add('disabled');
-                    }
-
-                    chamber.addEventListener('click', () => {
-                        if (this.gameOver || this.turn >= this.maxTurns || isRemoved) return;
-                        this.selectChamber(i);
-                    });
-
-                    cylinder.appendChild(chamber);
-                }
-            }
-
-            updateSelectedInfoFromSync() {
-                const info = document.getElementById('selectedInfo');
-                if (this.gameOver) {
-                    info.textContent = this.turn >= this.maxTurns ? '🏆 Chiến thắng!' : '💀 Thua cuộc!';
-                    info.style.borderColor = this.turn >= this.maxTurns ? '#6bcb77' : '#ff6b6b';
-                } else if (this.selectedChamber !== -1 && !this.removedChambers.has(this.selectedChamber)) {
-                    info.textContent = `🎯 Đã chọn ô ${this.selectedChamber + 1} → Nhấn BẮN`;
-                    info.style.borderColor = '#667eea';
-                } else {
-                    info.textContent = '👆 Chọn ô → Nhấn BẮN';
-                    info.style.borderColor = '#ff6b6b';
-                }
-            }
-
-            updateRemainingInfo() {
-                const remaining = this.totalChambers - this.removedChambers.size;
-                document.getElementById('remainingCount').textContent = remaining;
-            }
-
-            updateHistory() {
-                const log = document.getElementById('historyLog');
-                log.innerHTML = '';
-                if (this.history.length === 0) {
-                    log.innerHTML = '<span style="color:rgba(255,255,255,0.08);font-size:0.6rem;">Chưa có</span>';
-                    return;
-                }
-                this.history.slice(-4).forEach(entry => {
-                    const el = document.createElement('span');
-                    el.className = `log-entry ${entry.hit ? 'danger' : 'safe'}`;
-                    el.textContent = `#${entry.turn} Ô${entry.position + 1}: ${entry.hit ? '💥' : '✅'}`;
-                    log.appendChild(el);
-                });
-            }
-
-            updateStats() {
-                document.getElementById('winCount').textContent = this.stats.wins;
-                document.getElementById('loseCount').textContent = this.stats.loses;
-                document.getElementById('totalGames').textContent = this.stats.total;
-            }
-
-            updateBalance() {
-                const balanceDisplay = document.getElementById('balanceDisplay');
-                if (this.isHost) {
-                    balanceDisplay.textContent = '♾️ Vô hạn';
-                    balanceDisplay.style.color = '#ffd93d';
-                    balanceDisplay.style.fontSize = '1.1rem';
-                    document.getElementById('betBtn').disabled = false;
-                } else {
-                    balanceDisplay.textContent = this.balance.toLocaleString();
-                    balanceDisplay.style.color = '#ffd93d';
-                    balanceDisplay.style.fontSize = '1rem';
-                    if (this.balance < 10 || !this.currentUser) {
-                        document.getElementById('betBtn').disabled = true;
-                    } else {
-                        document.getElementById('betBtn').disabled = false;
-                    }
-                }
-            }
-
-            updateFireButton() {
-                const fireBtn = document.getElementById('fireBtn');
-                if (this.isHost && !this.gameOver && this.turn < this.maxTurns) {
-                    fireBtn.disabled = false;
-                    fireBtn.style.opacity = '1';
-                    fireBtn.style.cursor = 'pointer';
-                } else {
-                    fireBtn.disabled = true;
-                    fireBtn.style.opacity = '0.3';
-                    fireBtn.style.cursor = 'not-allowed';
-                }
-            }
-
-            updateGameOverMessage() {
-                const el = document.getElementById('gameOverMessage');
-                if (this.gameOver) {
-                    el.style.display = 'block';
-                    if (this.turn >= this.maxTurns) {
-                        el.className = 'game-over win';
-                        el.textContent = '🎉 CHIẾN THẮNG! Sống sót 5 lượt!';
-                    } else {
-                        el.className = 'game-over lose';
-                        el.textContent = '💥 BÙM! Thua cuộc!';
-                    }
-                } else {
-                    el.style.display = 'none';
-                }
-            }
-
-            updateBetUI() {
-                const isHost = this.isHost;
-                const betAmountInput = document.getElementById('betAmount');
-                const betPresets = document.querySelectorAll('.bet-presets button');
-                const betBtn = document.getElementById('betBtn');
-                const betHeader = document.getElementById('betHeader');
-                
-                if (isHost) {
-                    betAmountInput.disabled = false;
-                    betPresets.forEach(btn => btn.disabled = false);
-                    betHeader.innerHTML = '💰 HỆ THỐNG CƯỢC <span style="color:#ffd93d;font-size:0.55rem;">👑 HOST (♾️)</span>';
-                } else {
-                    betAmountInput.disabled = true;
-                    betPresets.forEach(btn => btn.disabled = true);
-                    betBtn.disabled = true;
-                    betHeader.innerHTML = '💰 HỆ THỐNG CƯỢC <span style="color:#ff6b6b;font-size:0.55rem;">🔒 HOST ONLY</span>';
-                }
-            }
-
-            updateRewardUI() {
-                const isHost = this.isHost;
-                const rewardInput = document.getElementById('rewardAmount');
-                const rewardSection = document.getElementById('rewardSection');
-                
-                if (isHost) {
-                    rewardInput.disabled = false;
-                    rewardSection.style.opacity = '1';
-                } else {
-                    rewardInput.disabled = true;
-                    rewardSection.style.opacity = '0.6';
-                }
-            }
-
-            updateBetResult(message, type = '') {
-                const el = document.getElementById('betResult');
-                el.textContent = message;
-                el.className = 'bet-result ' + type;
-            }
-
-            updateBetHistory() {
-                const el = document.getElementById('betHistory');
-                if (this.betHistory.length === 0) {
-                    el.innerHTML = '<div class="bet-history-item" style="justify-content:center;color:rgba(255,255,255,0.15);">Chưa có lịch sử</div>';
-                    return;
-                }
-                el.innerHTML = this.betHistory.slice(0, 5).map(item => {
-                    const sign = item.type === 'win' ? '+' : '-';
-                    const cls = item.type === 'win' ? 'win' : 'lose';
-                    return `<div class="bet-history-item ${cls}">
-                        <span>Lần ${item.turn}</span>
-                        <span>${sign}${item.amount.toLocaleString()}đ</span>
-                    </div>`;
-                }).join('');
-            }
-
-            selectChamber(index) {
-                if (this.gameOver || this.turn >= this.maxTurns) return;
-                if (this.removedChambers.has(index)) {
-                    sound.play('click');
-                    return;
-                }
-                if (this.selectedChamber === index) {
+    <script>
+        (function() {
+            class RussianRoulette {
+                constructor() {
+                    this.totalChambers = 6;
+                    this.maxTurns = 5;
+                    this.turn = 0;
+                    this.bulletPosition = -1;
+                    this.gameOver = false;
+                    this.history = [];
                     this.selectedChamber = -1;
-                    this.updateGameState();
-                    sound.play('click');
-                    return;
-                }
-                this.selectedChamber = index;
-                this.updateGameState();
-                sound.play('click');
-            }
-
-            // ===== LOGIC BẮN - SỐNG SÓT QUA 5 LƯỢT MỚI THẮNG =====
-            fire() {
-                if (!this.isHost) {
-                    alert('⚠️ Chỉ Host (admin1@game.com) mới được bắn!');
-                    return;
-                }
-                
-                if (this.gameOver || this.turn >= this.maxTurns) return;
-                if (this.selectedChamber === -1 || this.removedChambers.has(this.selectedChamber)) {
-                    sound.play('click');
-                    return;
+                    this.removedChambers = new Set();
+                    this.stats = { wins: 0, loses: 0, total: 0 };
+                    this.init();
                 }
 
-                const index = this.selectedChamber;
-                this.turn++;
-                const hit = this.bulletPosition === index;
-                const who = this.currentUser?.displayName || this.currentUser?.email || 'Bạn';
+                init() {
+                    this.turn = 0;
+                    this.gameOver = false;
+                    this.history = [];
+                    this.selectedChamber = -1;
+                    this.removedChambers = new Set();
+                    this.bulletPosition = Math.floor(Math.random() * this.totalChambers);
+                    document.getElementById('gameOverMessage').style.display = 'none';
+                    document.getElementById('fireBtn').disabled = false;
+                    this.updateUI();
+                    this.updateSelectedInfo('👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN', '#ff6b6b');
+                    this.updateRemainingInfo();
+                }
 
-                this.history.push({ turn: this.turn, hit, position: index });
-                this.removedChambers.add(index);
-                this.selectedChamber = -1;
+                getCurrentProbability() {
+                    const remaining = this.totalChambers - this.removedChambers.size;
+                    if (remaining === 0) return 0;
+                    return (1 / remaining) * 100;
+                }
 
-                if (hit) {
-                    // TRÚNG ĐẠN → THUA (kể cả lượt 5)
-                    sound.play('no');
-                    this.gameOver = true;
-                    this.stats.loses++;
-                    this.stats.total++;
-                    this.addChatMessage('system', `💥 ${who} đã trúng đạn tại ô ${index + 1}! (Lượt ${this.turn}/${this.maxTurns})`);
-                    
-                    if (this.betActive) {
-                        this.processBetResult(false);
+                getRemainingChambers() {
+                    const remaining = [];
+                    for (let i = 0; i < this.totalChambers; i++) {
+                        if (!this.removedChambers.has(i)) remaining.push(i);
                     }
-                } else {
-                    // AN TOÀN
-                    sound.play('tach');
-                    this.addChatMessage('system', `✅ ${who} ô ${index + 1} an toàn! (Lượt ${this.turn}/${this.maxTurns})`);
-
-                    if (this.betActive) {
-                        this.processBetResult(true);
-                    }
-
-                    // KIỂM TRA ĐÃ SỐNG SÓT QUA 5 LƯỢT CHƯA
-                    if (this.turn >= this.maxTurns) {
-                        // ĐÃ SỐNG SÓT 5 LƯỢT → THẮNG
-                        sound.play('win');
-                        this.gameOver = true;
-                        this.stats.wins++;
-                        this.stats.total++;
-                        
-                        const reward = parseInt(document.getElementById('rewardAmount').value) || 500;
-                        this.balance += reward;
-                        this.hasReceivedReward = true;
-                        
-                        this.addChatMessage('system', `🎉 ${who} CHIẾN THẮNG! Sống sót ${this.maxTurns} lượt! Nhận ${reward.toLocaleString()}đ thưởng!`);
-                        this.updateBalance();
-                    } else {
-                        // DI CHUYỂN ĐẠN ĐẾN Ô KHÁC
-                        const remaining = this.getRemainingChambers();
-                        if (remaining.length > 0) {
-                            let newPos;
-                            do {
-                                newPos = remaining[Math.floor(Math.random() * remaining.length)];
-                            } while (newPos === this.bulletPosition && remaining.length > 1);
-                            this.bulletPosition = newPos;
-                        }
-                    }
+                    return remaining;
                 }
 
-                this.updateGameState();
-                this.updateAllUI();
-            }
-
-            processBetResult(win) {
-                const amount = this.betAmount;
-                if (win) {
-                    const multiplier = this.getRemainingChambers().length + 1;
-                    const winAmount = amount * multiplier;
-                    this.balance += winAmount;
-                    this.betActive = false;
-                    document.getElementById('cancelBetBtn').disabled = true;
-                    this.updateBetResult(`🎉 THẮNG! +${winAmount.toLocaleString()}đ (x${multiplier})`, 'win');
-                    this.addChatMessage('system', `🎉 ${this.currentUser?.displayName || 'Bạn'} thắng cược ${winAmount.toLocaleString()}đ!`);
-                    sound.play('cash');
-                    this.betHistory.unshift({ type: 'win', amount: winAmount, turn: this.turn });
-                } else {
-                    if (this.isHost) {
-                        this.updateBetResult(`💀 THUA! (Admin ♾️ không mất)`, 'draw');
-                        this.addChatMessage('system', `💀 ${this.currentUser?.displayName || 'Bạn'} thua cược (Admin không mất)`);
-                    } else {
-                        this.balance -= amount;
-                        this.updateBetResult(`💀 THUA! -${amount.toLocaleString()}đ`, 'lose');
-                        this.addChatMessage('system', `💀 ${this.currentUser?.displayName || 'Bạn'} thua cược ${amount.toLocaleString()}đ!`);
-                        sound.play('lose');
-                    }
-                    this.betActive = false;
-                    document.getElementById('cancelBetBtn').disabled = true;
-                    this.betHistory.unshift({ type: 'lose', amount: amount, turn: this.turn });
-                }
-                this.updateBetHistory();
-                this.updateBalance();
-                document.getElementById('betBtn').disabled = false;
-                document.getElementById('cancelBetBtn').disabled = true;
-                this.updateGameState();
-            }
-
-            getRemainingChambers() {
-                const remaining = [];
-                for (let i = 0; i < this.totalChambers; i++) {
-                    if (!this.removedChambers.has(i)) remaining.push(i);
-                }
-                return remaining;
-            }
-
-            reset() {
-                if (!this.isHost) {
-                    alert('⚠️ Chỉ Host (admin1@game.com) mới được reset!');
-                    return;
-                }
-                
-                if (this.betActive) {
-                    if (!confirm('Bạn đang có cược chưa xử lý. Reset sẽ mất cược. Tiếp tục?')) {
+                selectChamber(index) {
+                    if (this.gameOver || this.turn >= this.maxTurns) return;
+                    if (this.removedChambers.has(index)) {
+                        this.updateSelectedInfo('❌ Ô này đã bị xóa! Chọn ô khác', '#ff6b6b');
                         return;
                     }
-                    this.betActive = false;
-                    document.getElementById('cancelBetBtn').disabled = true;
-                    document.getElementById('betBtn').disabled = false;
-                }
-                
-                this.turn = 0;
-                this.gameOver = false;
-                this.history = [];
-                this.selectedChamber = -1;
-                this.removedChambers = new Set();
-                this.bulletPosition = Math.floor(Math.random() * this.totalChambers);
-                this.betActive = false;
-                this.currentBetResult = null;
-                this.hasReceivedReward = false;
-                
-                document.getElementById('gameOverMessage').style.display = 'none';
-                this.updateGameState();
-                this.updateAllUI();
-                this.addChatMessage('system', '🔄 Đã bắt đầu ván mới!');
-                sound.play('click');
-            }
-
-            addChatMessage(type, text) {
-                const user = this.currentUser?.displayName || this.currentUser?.email || 'Anonymous';
-                push(MESSAGES_REF, {
-                    type: type,
-                    text: text,
-                    timestamp: Date.now(),
-                    user: user
-                });
-            }
-
-            setUser(user) {
-                this.currentUser = user;
-                this.isHost = user && user.email === 'admin1@game.com';
-                
-                const fireBtn = document.getElementById('fireBtn');
-                const resetBtn = document.getElementById('resetBtn');
-                
-                if (this.isHost) {
-                    fireBtn.disabled = false;
-                    fireBtn.style.opacity = '1';
-                    fireBtn.style.cursor = 'pointer';
-                    resetBtn.disabled = false;
-                    resetBtn.style.opacity = '1';
-                    resetBtn.style.cursor = 'pointer';
-                } else {
-                    fireBtn.disabled = true;
-                    fireBtn.style.opacity = '0.3';
-                    fireBtn.style.cursor = 'not-allowed';
-                    resetBtn.disabled = true;
-                    resetBtn.style.opacity = '0.3';
-                    resetBtn.style.cursor = 'not-allowed';
-                }
-                
-                if (user) {
-                    const roleEl = document.getElementById('userRole');
-                    roleEl.textContent = this.isHost ? '👑 HOST' : '🎮 Player';
-                    roleEl.style.background = this.isHost ? 'rgba(255,215,0,0.12)' : 'rgba(102,126,234,0.12)';
-                    roleEl.style.color = this.isHost ? '#ffd93d' : '#a8b8ff';
-                }
-                
-                this.updateBalance();
-                this.updateBetUI();
-                this.updateRewardUI();
-                this.updateFireButton();
-            }
-
-            loadUserData(uid) {
-                if (this.isHost) {
-                    this.balance = 999999999;
-                    this.updateBalance();
-                    return;
-                }
-                
-                const userRef = ref(database, `users/${uid}`);
-                get(userRef).then(snapshot => {
-                    const data = snapshot.val();
-                    if (data) {
-                        this.balance = data.balance || 1000;
-                        this.stats = data.stats || { wins: 0, loses: 0, total: 0 };
-                        this.betHistory = data.betHistory || [];
-                        this.updateBalance();
-                        this.updateStats();
-                        this.updateBetHistory();
-                    } else {
-                        set(userRef, { balance: 1000, stats: { wins: 0, loses: 0, total: 0 }, betHistory: [] });
+                    if (this.selectedChamber === index) {
+                        this.selectedChamber = -1;
+                        this.updateUI();
+                        this.updateSelectedInfo('👆 Chọn một ô trên ổ quay', '#ff6b6b');
+                        return;
                     }
-                });
-            }
-
-            saveUserData(uid) {
-                if (this.isHost) return;
-                const userRef = ref(database, `users/${uid}`);
-                update(userRef, {
-                    balance: this.balance,
-                    stats: this.stats,
-                    betHistory: this.betHistory.slice(0, 20)
-                });
-            }
-        }
-
-        // ============================================================
-        // 4. INIT
-        // ============================================================
-        const game = new RussianRoulette();
-
-        // ============================================================
-        // 5. AUTH
-        // ============================================================
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userInfo = document.getElementById('userInfo');
-        const userName = document.getElementById('userName');
-        const userAvatar = document.getElementById('userAvatar');
-        const authModal = document.getElementById('authModal');
-        const authClose = document.getElementById('authClose');
-        const resetBtn = document.getElementById('resetBtn');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-
-        document.getElementById('switchToRegister').addEventListener('click', () => {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-        });
-        document.getElementById('switchToLogin').addEventListener('click', () => {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-        });
-
-        document.getElementById('loginAuthBtn').addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const errorEl = document.getElementById('authError');
-            errorEl.textContent = '';
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                authModal.classList.remove('active');
-                sound.play('click');
-            } catch (error) {
-                errorEl.textContent = '❌ ' + (error.message || 'Đăng nhập thất bại!');
-            }
-        });
-
-        document.getElementById('registerAuthBtn').addEventListener('click', async () => {
-            const displayName = document.getElementById('registerDisplayName').value.trim();
-            const email = document.getElementById('registerEmail').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const errorEl = document.getElementById('registerError');
-            errorEl.textContent = '';
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await updateProfile(userCredential.user, { displayName: displayName });
-                const userRef = ref(database, `users/${userCredential.user.uid}`);
-                await set(userRef, { balance: 1000, stats: { wins: 0, loses: 0, total: 0 }, betHistory: [] });
-                authModal.classList.remove('active');
-                sound.play('click');
-            } catch (error) {
-                errorEl.textContent = '❌ ' + (error.message || 'Đăng ký thất bại!');
-            }
-        });
-
-        loginBtn.addEventListener('click', () => authModal.classList.add('active'));
-        authClose.addEventListener('click', () => authModal.classList.remove('active'));
-        authModal.addEventListener('click', (e) => {
-            if (e.target === authModal) authModal.classList.remove('active');
-        });
-
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('loginAuthBtn').click();
-        });
-        document.getElementById('registerPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') document.getElementById('registerAuthBtn').click();
-        });
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                game.currentUser = user;
-                userInfo.style.display = 'flex';
-                loginBtn.style.display = 'none';
-                userName.textContent = user.displayName || user.email || 'User';
-                userAvatar.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
-                chatInput.disabled = false;
-                sendBtn.disabled = false;
-                
-                game.setUser(user);
-                game.loadUserData(user.uid);
-                
-                if (user.email === 'admin1@game.com') {
-                    game.addChatMessage('system', '👑 Host đã đăng nhập!');
-                } else {
-                    game.addChatMessage('system', `🎮 ${user.displayName || 'User'} đã tham gia!`);
+                    this.selectedChamber = index;
+                    this.updateUI();
+                    this.updateSelectedInfo(`🎯 Đã chọn ô ${index + 1} - Nhấn BẮN`, '#667eea');
                 }
-                updateOnlineCount();
-            } else {
-                game.currentUser = null;
-                game.isHost = false;
-                userInfo.style.display = 'none';
-                loginBtn.style.display = 'block';
-                document.getElementById('fireBtn').disabled = true;
-                document.getElementById('betBtn').disabled = true;
-                resetBtn.disabled = true;
-                chatInput.disabled = false;
-                sendBtn.disabled = false;
-            }
-        });
 
-        logoutBtn.addEventListener('click', () => {
-            if (game.currentUser) game.saveUserData(game.currentUser.uid);
-            signOut(auth);
-            sound.play('click');
-        });
+                fire() {
+                    if (this.gameOver || this.turn >= this.maxTurns) return;
+                    if (this.selectedChamber === -1) {
+                        this.updateSelectedInfo('⚠️ Vui lòng chọn một ô trước khi bắn!', '#ff6b6b');
+                        return;
+                    }
 
-        // ============================================================
-        // 6. CHAT - GỬI TIN NHẮN
-        // ============================================================
-        function updateOnlineCount() {
-            onValue(ONLINE_REF, (snapshot) => {
-                const count = snapshot.val() || 0;
-                document.getElementById('onlineCount').textContent = `🟢 ${count}`;
-                document.getElementById('chatOnline').textContent = `🟢 ${count}`;
-            });
-        }
+                    const index = this.selectedChamber;
+                    if (this.removedChambers.has(index)) {
+                        this.updateSelectedInfo('❌ Ô đã bị xóa! Chọn ô khác', '#ff6b6b');
+                        this.selectedChamber = -1;
+                        this.updateUI();
+                        return;
+                    }
 
-        function sendChatMessage() {
-            const text = chatInput.value.trim();
-            if (!text) return;
-            const user = game.currentUser?.displayName || game.currentUser?.email || 'Anonymous';
-            push(MESSAGES_REF, {
-                type: 'user',
-                text: text,
-                user: user,
-                timestamp: Date.now()
-            });
-            chatInput.value = '';
-            sound.play('click');
-        }
+                    this.turn++;
+                    const hit = (this.bulletPosition === index);
+                    this.history.push({ turn: this.turn, hit, position: index });
 
-        sendBtn.addEventListener('click', sendChatMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        });
+                    // Xóa ô đã chọn (đồng bộ)
+                    this.removeChamber(index);
+                    this.selectedChamber = -1;
 
-        // ============================================================
-        // 7. BETTING
-        // ============================================================
-        const betAmountInput = document.getElementById('betAmount');
-        const betBtn = document.getElementById('betBtn');
-        const cancelBetBtn = document.getElementById('cancelBetBtn');
+                    this.updateUI();
 
-        document.querySelectorAll('.bet-presets button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const amount = parseInt(btn.dataset.amount);
-                if (amount <= game.balance || game.isHost) {
-                    betAmountInput.value = amount;
-                    sound.play('click');
-                } else {
-                    betAmountInput.value = game.balance;
+                    if (hit) {
+                        this.gameOver = true;
+                        this.stats.loses++;
+                        this.stats.total++;
+                        const msg = document.getElementById('gameOverMessage');
+                        msg.style.display = 'block';
+                        msg.className = 'game-over lose';
+                        msg.textContent = `💥 BÙM! Trúng đạn tại ô ${index + 1}!`;
+                        this.updateStats();
+                        this.animateChamber(index, 'exploded');
+                        this.updateSelectedInfo('💀 Bạn đã thua!', '#ff6b6b');
+                        document.getElementById('fireBtn').disabled = true;
+                    } else {
+                        this.animateChamber(index, 'fired');
+                        this.updateSelectedInfo(`✅ An toàn! Ô ${index + 1} không có đạn`, '#6bcb77');
+
+                        if (this.turn >= this.maxTurns) {
+                            this.gameOver = true;
+                            this.stats.wins++;
+                            this.stats.total++;
+                            const msg = document.getElementById('gameOverMessage');
+                            msg.style.display = 'block';
+                            msg.className = 'game-over win';
+                            msg.textContent = '🎉 CHIẾN THẮNG! Sống sót qua 5 lượt!';
+                            this.updateStats();
+                            this.updateSelectedInfo('🏆 Bạn đã chiến thắng!', '#6bcb77');
+                            document.getElementById('fireBtn').disabled = true;
+                        } else {
+                            // Di chuyển đạn ngẫu nhiên đến ô còn lại (ẩn)
+                            const remaining = this.getRemainingChambers();
+                            if (remaining.length > 0) {
+                                let newPos;
+                                do {
+                                    newPos = remaining[Math.floor(Math.random() * remaining.length)];
+                                } while (newPos === this.bulletPosition && remaining.length > 1);
+                                this.bulletPosition = newPos;
+                                this.updateSelectedInfo(`🔄 Chọn ô tiếp theo`, '#ffd93d');
+                            }
+                        }
+                    }
+
+                    this.updateUI();
+                    this.updateHistory();
+                    this.updateRemainingInfo();
                 }
-            });
-        });
 
-        betBtn.addEventListener('click', () => {
-            if (!game.isHost) {
-                alert('⚠️ Chỉ Host (admin1@game.com) mới được đặt cược!');
-                return;
-            }
-            if (!game.currentUser) {
-                alert('Vui lòng đăng nhập!');
-                loginBtn.click();
-                return;
-            }
-            if (game.gameOver || game.turn >= game.maxTurns) {
-                game.updateBetResult('⚠️ Ván đã kết thúc!', 'draw');
-                return;
-            }
-            if (game.selectedChamber === -1) {
-                game.updateBetResult('⚠️ Hãy chọn ô trước!', 'draw');
-                return;
-            }
-            if (game.betActive) {
-                game.updateBetResult('⚠️ Đã có cược!', 'draw');
-                return;
-            }
+                removeChamber(index) {
+                    this.removedChambers.add(index);
+                    const chambers = document.querySelectorAll('.chamber');
+                    if (chambers[index]) {
+                        chambers[index].classList.add('removing');
+                        setTimeout(() => {
+                            chambers[index].classList.add('removed');
+                            chambers[index].classList.remove('removing');
+                        }, 600);
+                    }
+                }
 
-            const amount = parseInt(betAmountInput.value);
-            if (isNaN(amount) || amount < 10) {
-                game.updateBetResult('⚠️ Số tiền tối thiểu 10đ!', 'draw');
-                return;
-            }
-            if (!game.isHost && amount > game.balance) {
-                game.updateBetResult(`⚠️ Không đủ số dư!`, 'draw');
-                return;
-            }
+                animateChamber(index, className) {
+                    const chambers = document.querySelectorAll('.chamber');
+                    if (chambers[index] && !chambers[index].classList.contains('removed')) {
+                        chambers[index].classList.add(className);
+                        setTimeout(() => {
+                            chambers[index].classList.remove(className);
+                        }, 600);
+                    }
+                }
 
-            game.betAmount = amount;
-            game.betActive = true;
-            cancelBetBtn.disabled = false;
-            betBtn.disabled = true;
-            const multiplier = game.getRemainingChambers().length + 1;
-            game.updateBetResult(`🎯 Đã đặt ${amount.toLocaleString()}đ vào ô ${game.selectedChamber + 1} (x${multiplier})`, 'waiting');
-            game.addChatMessage('system', `🎯 ${game.currentUser.displayName || 'Host'} đặt ${amount.toLocaleString()}đ vào ô ${game.selectedChamber + 1}`);
-            sound.play('bet');
-            game.updateGameState();
-        });
+                updateUI() {
+                    document.getElementById('turnDisplay').textContent = `${this.turn}/${this.maxTurns}`;
+                    const prob = this.getCurrentProbability();
+                    document.getElementById('probabilityDisplay').textContent = prob.toFixed(1) + '%';
 
-        cancelBetBtn.addEventListener('click', () => {
-            if (!game.betActive) return;
-            game.betActive = false;
-            cancelBetBtn.disabled = true;
-            betBtn.disabled = false;
-            game.updateBetResult(`🔄 Đã hủy cược`, 'draw');
-            game.addChatMessage('system', `🔄 ${game.currentUser?.displayName || 'Host'} đã hủy cược`);
-            sound.play('click');
-            game.updateGameState();
-        });
+                    const statusEl = document.getElementById('statusDisplay');
+                    if (this.gameOver) {
+                        if (this.turn === this.maxTurns) {
+                            statusEl.className = 'bullet-status safe';
+                            statusEl.textContent = '🏆 Chiến thắng!';
+                        } else {
+                            statusEl.className = 'bullet-status danger';
+                            statusEl.textContent = '💀 Bạn đã chết!';
+                        }
+                    } else if (this.selectedChamber !== -1) {
+                        statusEl.className = 'bullet-status selected';
+                        statusEl.textContent = `🎯 Đã chọn ô ${this.selectedChamber + 1}`;
+                    } else {
+                        statusEl.className = 'bullet-status waiting';
+                        statusEl.textContent = '🟡 Chọn ô để bóp cò';
+                    }
+                    this.renderCylinder();
+                }
 
-        // ============================================================
-        // 8. GAME CONTROLS
-        // ============================================================
-        document.getElementById('fireBtn').addEventListener('click', () => {
-            if (!game.isHost) {
-                alert('⚠️ Chỉ Host (admin1@game.com) mới được bắn!');
-                return;
-            }
-            if (!game.currentUser) {
-                alert('Vui lòng đăng nhập!');
-                loginBtn.click();
-                return;
-            }
-            if (game.betActive && !game.gameOver) {
-                if (!confirm('Bạn đang có cược. Bắn sẽ xác nhận kết quả. Tiếp tục?')) {
-                    return;
+                renderCylinder() {
+                    const cylinder = document.getElementById('cylinder');
+                    cylinder.innerHTML = '';
+                    const icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
+
+                    for (let i = 0; i < this.totalChambers; i++) {
+                        const chamber = document.createElement('div');
+                        chamber.className = 'chamber';
+                        chamber.dataset.index = i;
+
+                        // === ĐỒNG BỘ HIỂN THỊ ĐẠN ===
+                        // Chỉ hiển thị viên đạn khi game over và đúng vị trí đạn
+                        if (this.gameOver && i === this.bulletPosition && !this.removedChambers.has(i)) {
+                            const dot = document.createElement('div');
+                            dot.className = 'bullet-dot';
+                            chamber.appendChild(dot);
+                        } else if (!this.removedChambers.has(i)) {
+                            // Ô còn sống: icon + chấm trống
+                            const icon = document.createElement('div');
+                            icon.className = 'chamber-icon';
+                            icon.textContent = icons[i];
+                            chamber.appendChild(icon);
+                            const dot = document.createElement('div');
+                            dot.className = 'empty-dot';
+                            chamber.appendChild(dot);
+                        }
+
+                        // Số thứ tự
+                        const number = document.createElement('div');
+                        number.className = 'chamber-number';
+                        number.textContent = i + 1;
+                        chamber.appendChild(number);
+
+                        if (!this.removedChambers.has(i)) {
+                            const hint = document.createElement('div');
+                            hint.className = 'click-hint';
+                            hint.textContent = '👆 Chọn';
+                            chamber.appendChild(hint);
+                        }
+
+                        if (this.selectedChamber === i && !this.gameOver && !this.removedChambers.has(i)) {
+                            chamber.classList.add('selected');
+                        }
+
+                        if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) {
+                            chamber.classList.add('disabled');
+                        }
+
+                        chamber.addEventListener('click', () => {
+                            if (this.gameOver || this.turn >= this.maxTurns || this.removedChambers.has(i)) return;
+                            this.selectChamber(i);
+                        });
+
+                        cylinder.appendChild(chamber);
+                    }
+                }
+
+                updateSelectedInfo(message, color = '#ff6b6b') {
+                    const info = document.getElementById('selectedInfo');
+                    info.textContent = message;
+                    info.style.borderColor = color;
+                    const colors = {
+                        '#ff6b6b': 'rgba(255, 107, 107, 0.08)',
+                        '#667eea': 'rgba(102, 126, 234, 0.08)',
+                        '#6bcb77': 'rgba(107, 203, 119, 0.08)',
+                        '#ffd93d': 'rgba(255, 217, 61, 0.08)'
+                    };
+                    info.style.background = colors[color] || 'rgba(255, 107, 107, 0.08)';
+                }
+
+                updateRemainingInfo() {
+                    const remaining = this.totalChambers - this.removedChambers.size;
+                    document.getElementById('remainingCount').textContent = remaining;
+                }
+
+                updateHistory() {
+                    const log = document.getElementById('historyLog');
+                    log.innerHTML = '';
+                    if (this.history.length === 0) {
+                        log.innerHTML = '<span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động</span>';
+                        return;
+                    }
+                    this.history.forEach(entry => {
+                        const el = document.createElement('span');
+                        el.className = `log-entry ${entry.hit ? 'danger' : 'safe'}`;
+                        el.textContent = `Lần ${entry.turn} (Ô ${entry.position + 1}): ${entry.hit ? '💥 TRÚNG' : '✅ AN TOÀN'}`;
+                        log.appendChild(el);
+                    });
+                }
+
+                updateStats() {
+                    document.getElementById('winCount').textContent = this.stats.wins;
+                    document.getElementById('loseCount').textContent = this.stats.loses;
+                    document.getElementById('totalGames').textContent = this.stats.total;
+                }
+
+                reset() {
+                    this.init();
+                    this.updateStats();
+                    this.updateHistory();
+                    document.getElementById('gameOverMessage').style.display = 'none';
+                    document.getElementById('fireBtn').disabled = false;
+                    this.selectedChamber = -1;
+                    this.removedChambers = new Set();
+                    this.bulletPosition = Math.floor(Math.random() * this.totalChambers);
+                    this.updateUI();
+                    this.updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
+                    this.updateRemainingInfo();
                 }
             }
-            game.fire();
-        });
 
-        resetBtn.addEventListener('click', () => game.reset());
+            const game = new RussianRoulette();
 
-        // ============================================================
-        // 9. REWARD
-        // ============================================================
-        document.getElementById('rewardAmount').addEventListener('input', function() {
-            const val = parseInt(this.value) || 0;
-            document.getElementById('rewardValue').textContent = val.toLocaleString();
-        });
-
-        // ============================================================
-        // 10. ONLINE COUNT
-        // ============================================================
-        const connectedRef = ref(database, '.info/connected');
-        onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                set(ONLINE_REF, 1);
-                onDisconnect(ONLINE_REF).set(0);
-            }
-        });
-        updateOnlineCount();
-
-        // Auto save
-        setInterval(() => {
-            if (game.currentUser) game.saveUserData(game.currentUser.uid);
-        }, 10000);
-
-        console.log('🎯 Russian Roulette - Realtime Sync');
-        console.log('👑 Host: admin1@game.com');
-        console.log('🔄 Băng đạn và chat đã được đồng bộ realtime!');
-        console.log('🎯 Luật: Sống sót qua 5 lượt là THẮNG!');
+            document.getElementById('fireBtn').addEventListener('click', () => game.fire());
+            document.getElementById('resetBtn').addEventListener('click', () => game.reset());
+        })();
     </script>
 </body>
 </html>
