@@ -612,10 +612,128 @@
         var isSyncing = false;
         var isFiring = false;
 
-        // ====== GUN ANIMATION ======
+        // ====== AUDIO ENGINE (tạo âm thanh bằng Web Audio API) ======
+        var audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Tạo âm thanh tiếng súng (có đạn - nổ)
+        function playGunshotSound() {
+            try {
+                initAudio();
+                var now = audioCtx.currentTime;
+                
+                // Tạo noise (tiếng nổ)
+                var bufferSize = audioCtx.sampleRate * 0.4;
+                var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                var data = buffer.getChannelData(0);
+                for (var i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.15));
+                }
+                var noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                // Low-pass filter để giống tiếng súng
+                var filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 3000;
+                
+                // Gain (volume) với envelope
+                var gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.8, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+                noise.stop(now + 0.4);
+                
+                // Thêm tiếng click kim loại
+                var clickBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.03, audioCtx.sampleRate);
+                var clickData = clickBuffer.getChannelData(0);
+                for (var j = 0; j < clickData.length; j++) {
+                    clickData[j] = (Math.random() * 2 - 1) * Math.exp(-j / (audioCtx.sampleRate * 0.005));
+                }
+                var click = audioCtx.createBufferSource();
+                click.buffer = clickBuffer;
+                var clickGain = audioCtx.createGain();
+                clickGain.gain.setValueAtTime(0.3, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                click.connect(clickGain);
+                clickGain.connect(audioCtx.destination);
+                click.start(now + 0.05);
+                click.stop(now + 0.08);
+            } catch(e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        // Tạo âm thanh tiếng súng (không đạn - kêu "cạch")
+        function playDryFireSound() {
+            try {
+                initAudio();
+                var now = audioCtx.currentTime;
+                
+                // Tiếng "cạch" kim loại
+                var bufferSize = audioCtx.sampleRate * 0.08;
+                var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                var data = buffer.getChannelData(0);
+                for (var i = 0; i < bufferSize; i++) {
+                    var t = i / audioCtx.sampleRate;
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30) * (1 + Math.sin(t * 8000) * 0.5);
+                }
+                var click = audioCtx.createBufferSource();
+                click.buffer = buffer;
+                
+                var gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                
+                click.connect(gain);
+                gain.connect(audioCtx.destination);
+                click.start(now);
+                click.stop(now + 0.08);
+                
+                // Thêm tiếng "cạch" thứ hai
+                setTimeout(function() {
+                    try {
+                        var click2Buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+                        var click2Data = click2Buffer.getChannelData(0);
+                        for (var k = 0; k < click2Data.length; k++) {
+                            click2Data[k] = (Math.random() * 2 - 1) * Math.exp(-k / (audioCtx.sampleRate * 0.01));
+                        }
+                        var click2 = audioCtx.createBufferSource();
+                        click2.buffer = click2Buffer;
+                        var gain2 = audioCtx.createGain();
+                        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                        click2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        click2.start(audioCtx.currentTime);
+                        click2.stop(audioCtx.currentTime + 0.05);
+                    } catch(e) {}
+                }, 150);
+            } catch(e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        // ====== GUN ANIMATION + SOUND ======
         function playGunAnimation(hit, callback) {
             if (isFiring) return;
             isFiring = true;
+
+            // Phát âm thanh tương ứng
+            if (hit) {
+                playGunshotSound();
+            } else {
+                playDryFireSound();
+            }
 
             var overlay = document.getElementById('gunOverlay');
             var gunImg = document.getElementById('gunImage');
@@ -656,7 +774,7 @@
                 }
             }, 700);
 
-            // Ẩn sau 1.5s
+            // Ẩn sau 2s
             setTimeout(function() {
                 overlay.style.display = 'none';
                 overlay.className = 'gun-overlay';
@@ -678,6 +796,12 @@
                 document.getElementById('connectionStatus').textContent = '✅ Đã sẵn sàng! ID: ' + id;
                 document.getElementById('connectionStatus').className = 'connection-status connected';
                 console.log('✅ PeerJS ID:', id);
+                
+                // Khởi tạo audio context khi có tương tác
+                document.addEventListener('click', function initAudioOnClick() {
+                    initAudio();
+                    document.removeEventListener('click', initAudioOnClick);
+                }, { once: true });
             });
 
             peer.on('connection', function(conn) {
@@ -963,7 +1087,7 @@
                 updateStats();
                 updateSelectedInfo('🔄 Host đã bắt đầu ván mới', '#ffd93d');
             } else if (action === 'fire' && !isHost) {
-                // Viewer nhận kết quả bắn, chạy animation
+                // Viewer nhận kết quả bắn, chạy animation + âm thanh
                 playGunAnimation(hit, function() {
                     // Cập nhật UI đã được applyState
                 });
@@ -1286,7 +1410,8 @@
             console.log('🎯 Russian Roulette - P2P Online Ready');
             console.log('👤 Role:', isHost ? 'HOST' : 'VIEWER');
             console.log('⚡ Force sync enabled on every action!');
-            console.log('🔫 Gun animation enabled!');
+            console.log('🔫 Gun animation + SOUND enabled!');
+            console.log('🔊 Audio: BÙM (có đạn) / CẠCH (không đạn)');
         });
 
         window.addEventListener('beforeunload', function() {
