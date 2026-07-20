@@ -621,11 +621,12 @@
             }
         }
 
-        // Tạo âm thanh tiếng súng (có đạn - nổ)
+        // Tạo âm thanh tiếng súng (có đạn - nổ) - PHÁT SAU 0.8s
         function playGunshotSound() {
             try {
                 initAudio();
-                var now = audioCtx.currentTime;
+                var delay = 0.8; // Chạy sau 0.8s
+                var now = audioCtx.currentTime + delay;
                 
                 // Tạo noise (tiếng nổ)
                 var bufferSize = audioCtx.sampleRate * 0.4;
@@ -673,11 +674,12 @@
             }
         }
 
-        // Tạo âm thanh tiếng súng (không đạn - kêu "cạch")
+        // Tạo âm thanh tiếng súng (không đạn - kêu "cạch") - PHÁT SAU 0.8s
         function playDryFireSound() {
             try {
                 initAudio();
-                var now = audioCtx.currentTime;
+                var delay = 0.8;
+                var now = audioCtx.currentTime + delay;
                 
                 // Tiếng "cạch" kim loại
                 var bufferSize = audioCtx.sampleRate * 0.08;
@@ -717,23 +719,16 @@
                         click2.start(audioCtx.currentTime);
                         click2.stop(audioCtx.currentTime + 0.05);
                     } catch(e) {}
-                }, 150);
+                }, 950);
             } catch(e) {
                 console.log('Audio error:', e);
             }
         }
 
-        // ====== GUN ANIMATION + SOUND ======
+        // ====== GUN ANIMATION + SOUND (SOUND CHẠY SAU 0.8s) ======
         function playGunAnimation(hit, callback) {
             if (isFiring) return;
             isFiring = true;
-
-            // Phát âm thanh tương ứng
-            if (hit) {
-                playGunshotSound();
-            } else {
-                playDryFireSound();
-            }
 
             var overlay = document.getElementById('gunOverlay');
             var gunImg = document.getElementById('gunImage');
@@ -760,6 +755,15 @@
 
             // Quay súng
             gunImg.className = 'gun-image';
+
+            // PHÁT ÂM THANH SAU 0.8s (khi animation gần xong)
+            setTimeout(function() {
+                if (hit) {
+                    playGunshotSound();
+                } else {
+                    playDryFireSound();
+                }
+            }, 800);
 
             // Sau khi quay xong, hiển thị kết quả
             setTimeout(function() {
@@ -1087,7 +1091,7 @@
                 updateStats();
                 updateSelectedInfo('🔄 Host đã bắt đầu ván mới', '#ffd93d');
             } else if (action === 'fire' && !isHost) {
-                // Viewer nhận kết quả bắn, chạy animation + âm thanh
+                // Viewer nhận kết quả bắn, chạy animation + âm thanh (âm thanh cũng delay 0.8s)
                 playGunAnimation(hit, function() {
                     // Cập nhật UI đã được applyState
                 });
@@ -1410,8 +1414,8 @@
             console.log('🎯 Russian Roulette - P2P Online Ready');
             console.log('👤 Role:', isHost ? 'HOST' : 'VIEWER');
             console.log('⚡ Force sync enabled on every action!');
-            console.log('🔫 Gun animation + SOUND enabled!');
-            console.log('🔊 Audio: BÙM (có đạn) / CẠCH (không đạn)');
+            console.log('🔫 Gun animation + SOUND (delay 0.8s) enabled!');
+            console.log('🔊 Audio: BÙM (có đạn) / CẠCH (không đạn) - phát sau 0.8s');
         });
 
         window.addEventListener('beforeunload', function() {
