@@ -257,6 +257,8 @@
             cursor: pointer; font-weight: 800; text-transform: uppercase;
             letter-spacing: 2px; box-shadow: 0 4px 30px rgba(255, 107, 107, 0.3);
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
         .btn-fire:hover:not(:disabled) {
             transform: translateY(-3px) scale(1.02);
@@ -359,9 +361,123 @@
             0% { background: rgba(107, 203, 119, 0.3); }
             100% { background: rgba(255, 255, 255, 0.05); }
         }
+
+        /* ====== GUN ANIMATION OVERLAY ====== */
+        .gun-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        .gun-overlay.active {
+            display: flex;
+            animation: overlayFade 0.15s ease-out;
+        }
+        @keyframes overlayFade {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .gun-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            animation: gunSpin 0.6s ease-out;
+            filter: drop-shadow(0 0 40px rgba(255, 107, 107, 0.6));
+        }
+        @keyframes gunSpin {
+            0% { transform: rotate(0deg) scale(0.3); opacity: 0; }
+            30% { transform: rotate(120deg) scale(1.2); opacity: 1; }
+            60% { transform: rotate(240deg) scale(0.9); }
+            100% { transform: rotate(360deg) scale(1); opacity: 1; }
+        }
+        .gun-image.hit {
+            animation: gunHit 0.8s ease-out;
+        }
+        @keyframes gunHit {
+            0% { transform: rotate(360deg) scale(1); }
+            30% { transform: rotate(380deg) scale(1.3); filter: drop-shadow(0 0 80px rgba(255, 0, 0, 0.9)); }
+            60% { transform: rotate(350deg) scale(0.8); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .gun-image.safe {
+            animation: gunSafe 0.6s ease-out;
+        }
+        @keyframes gunSafe {
+            0% { transform: rotate(360deg) scale(1); }
+            50% { transform: rotate(370deg) scale(1.1); filter: drop-shadow(0 0 60px rgba(107, 203, 119, 0.6)); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        /* Gun result text */
+        .gun-result {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            font-size: 4rem;
+            font-weight: 900;
+            z-index: 10000;
+            display: none;
+            text-shadow: 0 0 60px rgba(255, 0, 0, 0.8);
+            pointer-events: none;
+        }
+        .gun-result.show {
+            display: block;
+            animation: resultPop 0.5s ease-out;
+        }
+        .gun-result.danger {
+            color: #ff6b6b;
+            text-shadow: 0 0 80px rgba(255, 0, 0, 0.8);
+        }
+        .gun-result.safe {
+            color: #6bcb77;
+            text-shadow: 0 0 80px rgba(107, 203, 119, 0.6);
+        }
+        @keyframes resultPop {
+            0% { transform: translate(-50%, 50%) scale(0); opacity: 0; }
+            60% { transform: translate(-50%, 40%) scale(1.3); opacity: 1; }
+            100% { transform: translate(-50%, 50%) scale(1); opacity: 1; }
+        }
+
+        /* Flash effect */
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+        .flash-overlay.active {
+            display: block;
+            animation: flashBang 0.3s ease-out;
+        }
+        @keyframes flashBang {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
+    <!-- Gun Animation Overlay -->
+    <div class="gun-overlay" id="gunOverlay">
+        <img src="a.png" alt="Súng" class="gun-image" id="gunImage" onerror="this.style.display='none'; document.querySelector('.gun-result').style.display='block';">
+    </div>
+    <div class="flash-overlay" id="flashOverlay"></div>
+    <div class="gun-result" id="gunResult"></div>
+
     <div class="container">
         <div class="header">
             <div class="header-left">
@@ -393,7 +509,6 @@
             <span class="role-badge" id="roleBadge">👑 Host</span>
         </div>
 
-        <!-- Viewer Mode Indicator -->
         <div class="viewer-overlay" id="viewerOverlay" style="display: none;">
             👁️ Bạn đang ở chế độ XEM - Chỉ host mới có thể tương tác
         </div>
@@ -495,6 +610,61 @@
         var myId = '';
         var autoSyncInterval = null;
         var isSyncing = false;
+        var isFiring = false;
+
+        // ====== GUN ANIMATION ======
+        function playGunAnimation(hit, callback) {
+            if (isFiring) return;
+            isFiring = true;
+
+            var overlay = document.getElementById('gunOverlay');
+            var gunImg = document.getElementById('gunImage');
+            var flash = document.getElementById('flashOverlay');
+            var result = document.getElementById('gunResult');
+
+            // Reset
+            gunImg.className = 'gun-image';
+            result.className = 'gun-result';
+            result.style.display = 'none';
+            flash.className = 'flash-overlay';
+
+            // Hiện overlay
+            overlay.style.display = 'flex';
+            overlay.className = 'gun-overlay active';
+
+            // Flash trắng
+            setTimeout(function() {
+                flash.className = 'flash-overlay active';
+                setTimeout(function() {
+                    flash.className = 'flash-overlay';
+                }, 300);
+            }, 100);
+
+            // Quay súng
+            gunImg.className = 'gun-image';
+
+            // Sau khi quay xong, hiển thị kết quả
+            setTimeout(function() {
+                if (hit) {
+                    gunImg.className = 'gun-image hit';
+                    result.textContent = '💥 TRÚNG!';
+                    result.className = 'gun-result show danger';
+                } else {
+                    gunImg.className = 'gun-image safe';
+                    result.textContent = '✅ AN TOÀN!';
+                    result.className = 'gun-result show safe';
+                }
+            }, 700);
+
+            // Ẩn sau 1.5s
+            setTimeout(function() {
+                overlay.style.display = 'none';
+                overlay.className = 'gun-overlay';
+                result.style.display = 'none';
+                isFiring = false;
+                if (callback) callback();
+            }, 2000);
+        }
 
         // ====== PEERJS ======
         function initPeer() {
@@ -543,7 +713,7 @@
                         updateRoleUI();
                     }
                 } else if (data.type === 'action') {
-                    handleRemoteAction(data.action, data.index);
+                    handleRemoteAction(data.action, data.index, data.hit);
                 }
             });
 
@@ -660,7 +830,7 @@
             updateUI();
             updateSelectedInfoBasedOnState();
             broadcastAction('select', index);
-            forceSync(); // Đồng bộ ngay khi chọn ô
+            forceSync();
         }
 
         function fire() {
@@ -684,8 +854,20 @@
                 return;
             }
 
-            gameState.turn++;
+            // Chạy animation súng trước khi xử lý
             var hit = gameState.bulletPosition === index;
+            
+            // Disable nút bắn trong lúc animation
+            document.getElementById('fireBtn').disabled = true;
+            
+            playGunAnimation(hit, function() {
+                // Sau khi animation xong, xử lý kết quả
+                processFireResult(index, hit);
+            });
+        }
+
+        function processFireResult(index, hit) {
+            gameState.turn++;
             gameState.history.push({
                 turn: gameState.turn,
                 hit: hit,
@@ -721,6 +903,7 @@
                         } while (newPos === gameState.bulletPosition && remaining.length > 1);
                         gameState.bulletPosition = newPos;
                     }
+                    document.getElementById('fireBtn').disabled = false;
                 }
             }
 
@@ -730,8 +913,8 @@
             updateHistory();
             updateStats();
             updateSelectedInfoBasedOnState();
-            broadcastAction('fire', index);
-            forceSync(); // 🔥 Đồng bộ NGAY sau khi bắn!
+            broadcastAction('fire', index, hit);
+            forceSync();
         }
 
         function resetGame() {
@@ -758,11 +941,11 @@
             updateStats();
             updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
             broadcastAction('reset');
-            forceSync(); // Đồng bộ ngay khi reset
+            forceSync();
         }
 
-        function handleRemoteAction(action, index) {
-            console.log('📨 Remote action:', action, index);
+        function handleRemoteAction(action, index, hit) {
+            console.log('📨 Remote action:', action, index, hit);
             if (action === 'reset') {
                 gameState.turn = 0;
                 gameState.gameOver = false;
@@ -779,15 +962,21 @@
                 updateHistory();
                 updateStats();
                 updateSelectedInfo('🔄 Host đã bắt đầu ván mới', '#ffd93d');
+            } else if (action === 'fire' && !isHost) {
+                // Viewer nhận kết quả bắn, chạy animation
+                playGunAnimation(hit, function() {
+                    // Cập nhật UI đã được applyState
+                });
             }
         }
 
         // ====== SYNC FUNCTIONS ======
-        function broadcastAction(action, index) {
+        function broadcastAction(action, index, hit) {
             var data = {
                 type: 'action',
                 action: action,
-                index: index
+                index: index,
+                hit: hit || false
             };
             connections.forEach(function(conn) {
                 try {
@@ -812,17 +1001,14 @@
             });
         }
 
-        // 🔥 Hàm đồng bộ NGAY LẬP TỨC
         function forceSync() {
             if (isSyncing) return;
             isSyncing = true;
             
             if (connections.length > 0 && isHost) {
                 broadcastState();
-                // Hiệu ứng flash trên status bar
                 var statusBar = document.querySelector('.status-bar');
                 statusBar.classList.remove('sync-flash');
-                // Force reflow
                 void statusBar.offsetWidth;
                 statusBar.classList.add('sync-flash');
                 console.log('⚡ Force sync executed');
@@ -1053,12 +1239,11 @@
             }
         }
 
-        // ====== AUTO SYNC LOOP (1 tick) ======
+        // ====== AUTO SYNC LOOP ======
         function startAutoSync() {
             if (autoSyncInterval) clearInterval(autoSyncInterval);
             autoSyncInterval = setInterval(function() {
                 if (connections.length > 0 && isHost) {
-                    // Chỉ sync nếu có thay đổi (kiểm tra qua timestamp)
                     broadcastState();
                     console.log('🔄 Auto sync tick');
                 }
@@ -1101,6 +1286,7 @@
             console.log('🎯 Russian Roulette - P2P Online Ready');
             console.log('👤 Role:', isHost ? 'HOST' : 'VIEWER');
             console.log('⚡ Force sync enabled on every action!');
+            console.log('🔫 Gun animation enabled!');
         });
 
         window.addEventListener('beforeunload', function() {
