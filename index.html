@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Russian Roulette · Đồng bộ REAL</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <title>Russian Roulette · P2P Online</title>
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <style>
-        /* CSS giữ nguyên như cũ */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -35,240 +34,120 @@
             gap: 20px;
             flex-wrap: wrap;
         }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        .header-left { display: flex; align-items: center; gap: 20px; }
         .header-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
+            width: 80px; height: 80px; border-radius: 50%;
             border: 3px solid rgba(255, 107, 107, 0.5);
             background: #1a1a2e;
         }
         h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
+            font-size: 2.2rem; font-weight: 800;
             background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .subtitle {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.95rem;
-            background: rgba(255, 255, 255, 0.06);
-            padding: 5px 16px;
-            border-radius: 30px;
-            display: inline-block;
+            color: rgba(255, 255, 255, 0.6); font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.06); padding: 5px 16px;
+            border-radius: 30px; display: inline-block;
         }
         .sync-badge {
-            background: rgba(107, 203, 119, 0.15);
-            color: #6bcb77;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid rgba(107, 203, 119, 0.2);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            background: rgba(107, 203, 119, 0.15); color: #6bcb77;
+            padding: 8px 20px; border-radius: 30px; font-size: 0.85rem;
+            font-weight: 600; border: 1px solid rgba(107, 203, 119, 0.2);
+            display: inline-flex; align-items: center; gap: 10px;
             animation: pulse 2s infinite;
         }
         .sync-badge .dot {
-            width: 10px;
-            height: 10px;
-            background: #6bcb77;
-            border-radius: 50%;
-            display: inline-block;
+            width: 10px; height: 10px; background: #6bcb77;
+            border-radius: 50%; display: inline-block;
             animation: blink 1s infinite;
         }
         @keyframes blink {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.2; transform: scale(0.8); }
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
         .status-bar {
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 20px;
-            padding: 16px 22px;
-            margin-bottom: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.04); border-radius: 20px;
+            padding: 16px 22px; margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; border: 1px solid rgba(255, 255, 255, 0.04);
         }
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95rem;
-        }
-        .status-item .label {
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 500;
-            font-size: 0.85rem;
-        }
-        .status-item .value {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #fff;
-        }
+        .status-item { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+        .status-item .label { color: rgba(255, 255, 255, 0.5); font-weight: 500; font-size: 0.85rem; }
+        .status-item .value { font-weight: bold; font-size: 1.1rem; color: #fff; }
         .bullet-status {
-            padding: 6px 18px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            background: rgba(255, 217, 61, 0.12);
-            color: #ffd93d;
-            border: 1px solid rgba(255, 217, 61, 0.15);
-            display: inline-block;
+            padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 0.85rem;
+            background: rgba(255, 217, 61, 0.12); color: #ffd93d;
+            border: 1px solid rgba(255, 217, 61, 0.15); display: inline-block;
         }
-        .bullet-status.safe {
-            background: rgba(107, 203, 119, 0.18);
-            color: #6bcb77;
-            border-color: rgba(107, 203, 119, 0.2);
-        }
-        .bullet-status.danger {
-            background: rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-            border-color: rgba(255, 107, 107, 0.25);
-            animation: pulse 1s infinite;
-        }
-        .bullet-status.waiting {
-            background: rgba(255, 217, 61, 0.12);
-            color: #ffd93d;
-            border-color: rgba(255, 217, 61, 0.15);
-            animation: pulse 1.6s infinite;
-        }
-        .bullet-status.selected {
-            background: rgba(102, 126, 234, 0.2);
-            color: #a8b8ff;
-            border-color: rgba(102, 126, 234, 0.25);
-        }
+        .bullet-status.safe { background: rgba(107, 203, 119, 0.18); color: #6bcb77; border-color: rgba(107, 203, 119, 0.2); }
+        .bullet-status.danger { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; border-color: rgba(255, 107, 107, 0.25); animation: pulse 1s infinite; }
+        .bullet-status.waiting { background: rgba(255, 217, 61, 0.12); color: #ffd93d; border-color: rgba(255, 217, 61, 0.15); animation: pulse 1.6s infinite; }
+        .bullet-status.selected { background: rgba(102, 126, 234, 0.2); color: #a8b8ff; border-color: rgba(102, 126, 234, 0.25); }
         .selected-info {
-            text-align: center;
-            padding: 14px 20px;
-            margin: 15px 0;
-            background: rgba(255, 107, 107, 0.06);
-            border-radius: 16px;
+            text-align: center; padding: 14px 20px; margin: 15px 0;
+            background: rgba(255, 107, 107, 0.06); border-radius: 16px;
             border: 2px solid rgba(255, 107, 107, 0.15);
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1rem;
-            font-weight: 500;
-            min-height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            transition: all 0.3s;
+            color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-weight: 500;
+            min-height: 56px; display: flex; align-items: center; justify-content: center;
+            gap: 10px; flex-wrap: wrap; transition: all 0.3s;
         }
         .selected-info .badge {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 2px 14px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.08); padding: 2px 14px;
+            border-radius: 20px; font-size: 0.75rem; color: rgba(255, 255, 255, 0.5);
         }
         .remaining-info {
-            text-align: center;
-            padding: 14px;
-            margin: 12px 0;
+            text-align: center; padding: 14px; margin: 12px 0;
             background: linear-gradient(135deg, rgba(255, 217, 61, 0.08), rgba(255, 107, 107, 0.08));
-            border-radius: 16px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.1rem;
+            border-radius: 16px; color: rgba(255, 255, 255, 0.7); font-size: 1.1rem;
             border: 2px solid rgba(255, 217, 61, 0.15);
         }
         .remaining-info .highlight {
-            color: #ffd93d;
-            font-weight: 800;
-            font-size: 2rem;
-            margin: 0 8px;
-            text-shadow: 0 0 30px rgba(255, 217, 61, 0.3);
+            color: #ffd93d; font-weight: 800; font-size: 2rem;
+            margin: 0 8px; text-shadow: 0 0 30px rgba(255, 217, 61, 0.3);
         }
-        .remaining-info .sub-text {
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.9rem;
-        }
+        .remaining-info .sub-text { font-weight: 400; color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
         .cylinder-wrapper {
-            position: relative;
-            max-width: 420px;
-            margin: 25px auto;
-            padding: 25px 20px 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            position: relative; max-width: 420px; margin: 25px auto;
+            padding: 25px 20px 20px; background: rgba(0, 0, 0, 0.4);
+            border-radius: 40px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .cylinder {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            padding: 5px;
-        }
+        .cylinder { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 5px; }
         .chamber {
-            aspect-ratio: 1;
-            border-radius: 50%;
+            aspect-ratio: 1; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01));
             border: 2px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 -3px 8px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            user-select: none;
+            position: relative; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer; user-select: none;
             background: radial-gradient(circle at 40% 40%, rgba(50, 50, 80, 0.4), rgba(10, 10, 20, 0.6));
         }
         .chamber .chamber-number {
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.6rem;
-            color: rgba(255, 255, 255, 0.25);
-            font-weight: 700;
+            position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+            font-size: 0.6rem; color: rgba(255, 255, 255, 0.25); font-weight: 700;
         }
         .chamber .bullet-dot {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 32px; height: 32px; border-radius: 50%;
             background: radial-gradient(circle at 40% 40%, #ff6b6b, #b71c1c);
             box-shadow: 0 0 40px rgba(255, 0, 0, 0.6), inset 0 -4px 8px rgba(0, 0, 0, 0.4);
             animation: bulletPulse 1.2s ease-in-out infinite;
         }
-        @keyframes bulletPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.12); }
-        }
+        @keyframes bulletPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
         .chamber .empty-dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 2px solid rgba(255, 255, 255, 0.06);
+            width: 18px; height: 18px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.06);
         }
         .chamber .chamber-icon {
-            font-size: 1.5rem;
-            opacity: 0.2;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            font-size: 1.5rem; opacity: 0.2;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         }
         .chamber.selected {
             border-color: rgba(102, 126, 234, 0.7);
             box-shadow: 0 0 50px rgba(102, 126, 234, 0.2);
-            transform: scale(1.08);
-            animation: glowBlue 1.5s ease-in-out infinite;
+            transform: scale(1.08); animation: glowBlue 1.5s ease-in-out infinite;
         }
         @keyframes glowBlue {
             0%, 100% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.15); }
@@ -280,44 +159,23 @@
             animation: explode 0.6s ease-out;
         }
         .chamber.removed {
-            transform: scale(0) rotate(180deg);
-            opacity: 0;
-            pointer-events: none;
-            border-color: transparent;
-            box-shadow: none;
-            margin: 0;
-            padding: 0;
-            min-height: 0;
-            height: 0;
-            aspect-ratio: unset;
+            transform: scale(0) rotate(180deg); opacity: 0; pointer-events: none;
+            border-color: transparent; box-shadow: none;
+            margin: 0; padding: 0; min-height: 0; height: 0; aspect-ratio: unset;
         }
-        .chamber.removing {
-            animation: removeAnimation 0.6s ease-in forwards;
-        }
+        .chamber.removing { animation: removeAnimation 0.6s ease-in forwards; }
         @keyframes removeAnimation {
             0% { transform: scale(1) rotate(0deg); opacity: 1; }
             40% { transform: scale(0.6) rotate(60deg); opacity: 0.6; }
             100% { transform: scale(0) rotate(180deg); opacity: 0; }
         }
-        .chamber.disabled {
-            cursor: not-allowed;
-            opacity: 0.35;
-        }
+        .chamber.disabled { cursor: not-allowed; opacity: 0.35; }
         .chamber .click-hint {
-            position: absolute;
-            bottom: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.45rem;
-            color: rgba(255, 255, 255, 0.15);
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-            font-weight: 600;
+            position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+            font-size: 0.45rem; color: rgba(255, 255, 255, 0.15); opacity: 0;
+            transition: opacity 0.3s; white-space: nowrap; font-weight: 600;
         }
-        .chamber:hover .click-hint {
-            opacity: 1;
-        }
+        .chamber:hover .click-hint { opacity: 1; }
         @keyframes explode {
             0% { transform: scale(1); }
             30% { transform: scale(1.3); }
@@ -325,191 +183,97 @@
             100% { transform: scale(1); }
         }
         .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 15px; margin: 20px 0; padding: 15px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.04);
         }
-        .stat-item {
-            text-align: center;
-        }
+        .stat-item { text-align: center; }
         .stat-item .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
+            font-size: 2rem; font-weight: 800;
             background: linear-gradient(135deg, #ffd93d, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .stat-item .stat-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.35);
-            margin-top: 4px;
-        }
+        .stat-item .stat-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.35); margin-top: 4px; }
         .history {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            padding: 16px 20px;
-            margin: 20px 0;
-            min-height: 80px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
+            padding: 16px 20px; margin: 20px 0; min-height: 80px;
             border: 1px solid rgba(255, 255, 255, 0.04);
         }
         .history h3 {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: rgba(255, 255, 255, 0.4); font-size: 0.85rem;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
         }
         .history h3 .count {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 0 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.06); padding: 0 12px;
+            border-radius: 20px; font-size: 0.75rem; color: rgba(255, 255, 255, 0.3);
         }
-        .history-log {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+        .history-log { display: flex; flex-wrap: wrap; gap: 8px; }
         .log-entry {
-            padding: 5px 16px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            animation: slideIn 0.3s ease-out;
+            padding: 5px 16px; border-radius: 30px; font-size: 0.8rem;
+            font-weight: 600; animation: slideIn 0.3s ease-out;
         }
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .log-entry.safe {
-            background: rgba(107, 203, 119, 0.12);
-            color: #6bcb77;
-            border: 1px solid rgba(107, 203, 119, 0.1);
-        }
-        .log-entry.danger {
-            background: rgba(255, 107, 107, 0.12);
-            color: #ff6b6b;
-            border: 1px solid rgba(255, 107, 107, 0.1);
-        }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .log-entry.safe { background: rgba(107, 203, 119, 0.12); color: #6bcb77; border: 1px solid rgba(107, 203, 119, 0.1); }
+        .log-entry.danger { background: rgba(255, 107, 107, 0.12); color: #ff6b6b; border: 1px solid rgba(255, 107, 107, 0.1); }
         .game-over {
-            text-align: center;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 20px;
-            font-size: 1.4rem;
-            font-weight: 700;
+            text-align: center; padding: 20px; margin: 20px 0;
+            border-radius: 20px; font-size: 1.4rem; font-weight: 700;
             animation: slideIn 0.5s ease-out;
         }
-        .game-over.win {
-            background: rgba(107, 203, 119, 0.12);
-            border: 2px solid rgba(107, 203, 119, 0.2);
-            color: #6bcb77;
-        }
-        .game-over.lose {
-            background: rgba(255, 107, 107, 0.12);
-            border: 2px solid rgba(255, 107, 107, 0.2);
-            color: #ff6b6b;
-        }
+        .game-over.win { background: rgba(107, 203, 119, 0.12); border: 2px solid rgba(107, 203, 119, 0.2); color: #6bcb77; }
+        .game-over.lose { background: rgba(255, 107, 107, 0.12); border: 2px solid rgba(255, 107, 107, 0.2); color: #ff6b6b; }
         .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 20px;
+            display: flex; gap: 15px; justify-content: center;
+            flex-wrap: wrap; margin-top: 20px;
         }
         .btn {
-            padding: 14px 40px;
-            border: none;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: 14px 40px; border: none; border-radius: 60px;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;
         }
-        .btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            color: #fff;
+            background: rgba(255, 255, 255, 0.06); color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         .btn-secondary:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.12); transform: translateY(-3px);
         }
         .btn-fire {
-            padding: 18px 60px;
-            font-size: 1.3rem;
+            padding: 18px 60px; font-size: 1.3rem;
             background: linear-gradient(135deg, #ff6b6b, #d63031);
-            color: #fff;
-            border: none;
-            border-radius: 60px;
-            cursor: pointer;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 4px 30px rgba(255, 107, 107, 0.3);
+            color: #fff; border: none; border-radius: 60px;
+            cursor: pointer; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 2px; box-shadow: 0 4px 30px rgba(255, 107, 107, 0.3);
             transition: all 0.3s;
         }
         .btn-fire:hover:not(:disabled) {
             transform: translateY(-3px) scale(1.02);
             box-shadow: 0 8px 45px rgba(255, 107, 107, 0.4);
         }
-        .btn-fire:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
+        .btn-fire:disabled { opacity: 0.3; cursor: not-allowed; }
         .btn-fire .fire-icon {
             display: inline-block;
             animation: fireIcon 0.5s ease-in-out infinite alternate;
             margin-right: 10px;
         }
-        @keyframes fireIcon {
-            0% { transform: scale(1) rotate(0deg); }
-            100% { transform: scale(1.1) rotate(6deg); }
-        }
+        @keyframes fireIcon { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.1) rotate(6deg); } }
         .cylinder-label {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-top: 14px;
+            text-align: center; color: rgba(255, 255, 255, 0.15);
+            font-size: 0.7rem; font-weight: 600; margin-top: 14px;
             letter-spacing: 3px;
         }
-        .fire-btn-container {
-            display: flex;
-            justify-content: center;
-            margin: 16px 0 8px;
-        }
+        .fire-btn-container { display: flex; justify-content: center; margin: 16px 0 8px; }
         .connection-status {
-            text-align: center;
-            padding: 8px;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            color: rgba(255, 255, 255, 0.3);
+            text-align: center; padding: 8px; margin-top: 10px;
+            font-size: 0.8rem; border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03); color: rgba(255, 255, 255, 0.3);
         }
-        .connection-status.connected {
-            color: #6bcb77;
-            background: rgba(107, 203, 119, 0.05);
-        }
-        .connection-status.disconnected {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.05);
-        }
+        .connection-status.connected { color: #6bcb77; background: rgba(107, 203, 119, 0.05); }
+        .connection-status.disconnected { color: #ff6b6b; background: rgba(255, 107, 107, 0.05); }
+        .connection-status.waiting { color: #ffd93d; background: rgba(255, 217, 61, 0.05); }
         @media (max-width: 600px) {
             .container { padding: 20px; }
             h1 { font-size: 1.6rem; }
@@ -521,6 +285,55 @@
             .btn-fire { padding: 15px 40px; font-size: 1.1rem; }
             .remaining-info .highlight { font-size: 1.5rem; }
         }
+        /* PeerJS Connection UI */
+        .peer-connect {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .peer-connect input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 10px 18px;
+            color: #fff;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 150px;
+            outline: none;
+        }
+        .peer-connect input::placeholder { color: rgba(255, 255, 255, 0.3); }
+        .peer-connect input:focus { border-color: rgba(107, 203, 119, 0.4); }
+        .btn-peer {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(107, 203, 119, 0.2);
+            color: #6bcb77;
+            border: 1px solid rgba(107, 203, 119, 0.2);
+        }
+        .btn-peer:hover { background: rgba(107, 203, 119, 0.3); transform: translateY(-2px); }
+        .btn-peer.copy { background: rgba(102, 126, 234, 0.2); color: #a8b8ff; border-color: rgba(102, 126, 234, 0.2); }
+        .btn-peer.copy:hover { background: rgba(102, 126, 234, 0.3); }
+        .peer-id-display {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: monospace;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -530,13 +343,23 @@
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%231a1a2e'/%3E%3Ctext x='40' y='50' text-anchor='middle' font-size='34' fill='%23ff6b6b'%3E🔫%3C/text%3E%3C/svg%3E" alt="Russian Roulette" class="header-image">
                 <div>
                     <h1>🔫 Đạn</h1>
-                    <span class="subtitle">🎯 6 vị trí · 1 viên · 5 lượt</span>
+                    <span class="subtitle">🎯 P2P Online · 6 vị trí · 5 lượt</span>
                 </div>
             </div>
             <div class="sync-badge">
                 <span class="dot"></span>
-                ☁️ Cloud Sync
+                🌐 P2P Online
             </div>
+        </div>
+
+        <!-- PeerJS Connection -->
+        <div class="peer-connect">
+            <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">🔑 ID của bạn:</span>
+            <span class="peer-id-display" id="myPeerId">Đang tạo...</span>
+            <button class="btn-peer copy" id="copyIdBtn">📋 Copy</button>
+            <span style="color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-left: auto;">Kết nối với:</span>
+            <input type="text" id="targetPeerId" placeholder="Nhập ID người khác">
+            <button class="btn-peer" id="connectBtn">🔗 Kết nối</button>
         </div>
 
         <div class="status-bar">
@@ -560,7 +383,7 @@
 
         <div class="selected-info" id="selectedInfo">
             👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN
-            <span class="badge">☁️ Cloud Sync</span>
+            <span class="badge">🌐 P2P Sync</span>
         </div>
 
         <div class="remaining-info">
@@ -617,42 +440,12 @@
         </div>
 
         <div class="connection-status" id="connectionStatus">
-            ⚡ Đang kết nối...
+            ⚡ Đang khởi tạo kết nối...
         </div>
     </div>
 
     <script>
-        // ============================================================
-        // 🔥 THAY THÔNG TIN CỦA BẠN VÀO ĐÂY
-        const SUPABASE_URL = 'https://vjynxdftgwkwzqthjydg.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_1cS0_se1jV_8GtEe4YO_mg_qbzm8AKS';
-        // ============================================================
-
-        // Kiểm tra supabase đã load chưa
-        console.log('🔍 Checking supabase...', typeof supabaseJs);
-
-        // Đợi supabase load
-        function waitForSupabase() {
-            return new Promise(function(resolve) {
-                if (typeof supabaseJs !== 'undefined') {
-                    resolve(supabaseJs);
-                    return;
-                }
-                var checkCount = 0;
-                var interval = setInterval(function() {
-                    checkCount++;
-                    if (typeof supabaseJs !== 'undefined') {
-                        clearInterval(interval);
-                        resolve(supabaseJs);
-                    } else if (checkCount > 50) {
-                        clearInterval(interval);
-                        resolve(null);
-                    }
-                }, 100);
-            });
-        }
-
-        // Game variables
+        // ====== GAME STATE ======
         var gameState = {
             turn: 0,
             maxTurns: 5,
@@ -665,9 +458,98 @@
             playerCount: 1
         };
 
-        var playerId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-        var supabaseClient = null;
-        var isSyncing = false;
+        var peer = null;
+        var connections = [];
+        var isHost = false;
+        var myId = '';
+
+        // ====== PEERJS ======
+        function initPeer() {
+            peer = new Peer({
+                debug: 2
+            });
+
+            peer.on('open', function(id) {
+                myId = id;
+                document.getElementById('myPeerId').textContent = id;
+                document.getElementById('connectionStatus').textContent = '✅ Đã sẵn sàng! ID: ' + id;
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                console.log('✅ PeerJS ID:', id);
+            });
+
+            peer.on('connection', function(conn) {
+                console.log('🔗 New connection from:', conn.peer);
+                connections.push(conn);
+                setupConnection(conn);
+                document.getElementById('playerCount').textContent = connections.length + 1;
+                updateSelectedInfo('👤 Đã kết nối với ' + conn.peer, '#6bcb77');
+                // Gửi state hiện tại cho người mới
+                conn.send({
+                    type: 'sync',
+                    data: gameState
+                });
+            });
+
+            peer.on('error', function(err) {
+                console.error('❌ Peer error:', err);
+                document.getElementById('connectionStatus').textContent = '❌ Lỗi: ' + err.message;
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            });
+        }
+
+        function setupConnection(conn) {
+            conn.on('data', function(data) {
+                console.log('📨 Received:', data);
+                if (data.type === 'sync') {
+                    // Nhận state từ người khác
+                    if (data.data) {
+                        applyState(data.data);
+                    }
+                } else if (data.type === 'action') {
+                    // Xử lý action từ người khác
+                    handleRemoteAction(data.action, data.index);
+                }
+            });
+
+            conn.on('close', function() {
+                console.log('🔌 Connection closed');
+                var index = connections.indexOf(conn);
+                if (index > -1) {
+                    connections.splice(index, 1);
+                }
+                document.getElementById('playerCount').textContent = connections.length + 1;
+                updateSelectedInfo('🔌 Một người chơi đã ngắt kết nối', '#ff6b6b');
+            });
+        }
+
+        function connectToPeer(peerId) {
+            if (!peer) {
+                alert('⚠️ Peer chưa sẵn sàng!');
+                return;
+            }
+            if (peerId === myId) {
+                alert('⚠️ Không thể kết nối với chính mình!');
+                return;
+            }
+            if (peerId.trim() === '') {
+                alert('⚠️ Vui lòng nhập ID!');
+                return;
+            }
+
+            var conn = peer.connect(peerId);
+            connections.push(conn);
+            setupConnection(conn);
+            document.getElementById('playerCount').textContent = connections.length + 1;
+            document.getElementById('connectionStatus').textContent = '🔗 Đã kết nối với ' + peerId;
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+            updateSelectedInfo('👤 Đã kết nối với ' + peerId, '#6bcb77');
+            
+            // Gửi state hiện tại
+            conn.send({
+                type: 'sync',
+                data: gameState
+            });
+        }
 
         // ====== GAME FUNCTIONS ======
         function getRemainingChambers() {
@@ -702,8 +584,8 @@
             
             renderCylinder();
             updateUI();
-            if (supabaseClient) updateCloudState();
             updateSelectedInfoBasedOnState();
+            broadcastAction('select', index);
         }
 
         function fire() {
@@ -728,7 +610,7 @@
                 turn: gameState.turn,
                 hit: hit,
                 position: index,
-                player: playerId
+                player: 'local'
             });
 
             gameState.removedChambers.push(index);
@@ -767,8 +649,8 @@
             updateRemainingInfo();
             updateHistory();
             updateStats();
-            if (supabaseClient) updateCloudState();
             updateSelectedInfoBasedOnState();
+            broadcastAction('fire', index);
         }
 
         function resetGame() {
@@ -789,16 +671,55 @@
             updateHistory();
             updateStats();
             updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
-            if (supabaseClient) updateCloudState();
+            broadcastAction('reset');
+        }
+
+        function handleRemoteAction(action, index) {
+            console.log('📨 Remote action:', action, index);
+            if (action === 'select') {
+                // Không tự động chọn ô từ người khác
+                // Chỉ cập nhật UI nếu cần
+            } else if (action === 'fire') {
+                // Đồng bộ state đã được gửi qua sync
+            } else if (action === 'reset') {
+                resetGame();
+            }
+        }
+
+        // ====== BROADCAST ======
+        function broadcastAction(action, index) {
+            var data = {
+                type: 'action',
+                action: action,
+                index: index
+            };
+            connections.forEach(function(conn) {
+                try {
+                    conn.send(data);
+                } catch(e) {
+                    console.error('❌ Send error:', e);
+                }
+            });
+        }
+
+        function broadcastState() {
+            var data = {
+                type: 'sync',
+                data: gameState
+            };
+            connections.forEach(function(conn) {
+                try {
+                    conn.send(data);
+                } catch(e) {
+                    console.error('❌ Send error:', e);
+                }
+            });
         }
 
         // ====== UI FUNCTIONS ======
         function renderCylinder() {
             var cylinder = document.getElementById('cylinder');
-            if (!cylinder) {
-                console.error('❌ Cylinder element not found!');
-                return;
-            }
+            if (!cylinder) return;
             cylinder.innerHTML = '';
             var icons = ['⭐', '🔴', '🔵', '🟢', '🟡', '💎'];
 
@@ -843,15 +764,12 @@
 
                 chamber.addEventListener('click', (function(idx) {
                     return function() {
-                        console.log('🖱️ Click chamber:', idx);
                         selectChamber(idx);
                     };
                 })(i));
 
                 cylinder.appendChild(chamber);
             }
-            
-            console.log('✅ Rendered cylinder, chambers:', cylinder.children.length);
         }
 
         function updateUI() {
@@ -878,7 +796,7 @@
 
         function animateChamber(index, className) {
             var chambers = document.querySelectorAll('.chamber');
-            if (chambers[index] && chambers[index].classList.contains('removed') === false) {
+            if (chambers[index] && !chambers[index].classList.contains('removed')) {
                 chambers[index].classList.add(className);
                 setTimeout(function() {
                     chambers[index].classList.remove(className);
@@ -922,7 +840,7 @@
             color = color || '#ff6b6b';
             var info = document.getElementById('selectedInfo');
             if (!info) return;
-            info.innerHTML = message + ' <span class="badge">☁️ Cloud Sync</span>';
+            info.innerHTML = message + ' <span class="badge">🌐 P2P Sync</span>';
             info.style.borderColor = color;
             var colors = {
                 '#ff6b6b': 'rgba(255, 107, 107, 0.08)',
@@ -960,195 +878,89 @@
             }
         }
 
-        // ====== SUPABASE FUNCTIONS ======
-        function initSupabase(supabase) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase initialized');
-            connectToSupabase();
-        }
-
-        async function connectToSupabase() {
-            try {
-                await fetchState();
-
-                var channel = supabaseClient
-                    .channel('game_sync')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'UPDATE',
-                            schema: 'public',
-                            table: 'game_state'
-                        },
-                        function(payload) {
-                            console.log('🔄 Real-time update');
-                            if (payload.new && payload.new.state) {
-                                var newState = payload.new.state;
-                                if (newState.lastUpdatedBy !== playerId) {
-                                    applyState(newState);
-                                }
-                            }
-                        }
-                    )
-                    .subscribe(function(status) {
-                        if (status === 'SUBSCRIBED') {
-                            document.getElementById('connectionStatus').textContent = '✅ Cloud Sync đã kết nối';
-                            document.getElementById('connectionStatus').className = 'connection-status connected';
-                            console.log('📡 Subscribed to real-time');
-                        }
-                    });
-
-            } catch (error) {
-                console.error('❌ Connection error:', error);
-                document.getElementById('connectionStatus').textContent = '❌ Lỗi kết nối: ' + error.message;
-                document.getElementById('connectionStatus').className = 'connection-status disconnected';
-            }
-        }
-
-        async function fetchState() {
-            try {
-                var result = await supabaseClient
-                    .from('game_state')
-                    .select('state')
-                    .eq('id', '1')
-                    .single();
-
-                if (result.error) {
-                    console.error('❌ Fetch error:', result.error);
-                    await initializeGameState();
-                    return;
-                }
-
-                if (result.data && result.data.state) {
-                    applyState(result.data.state);
-                } else {
-                    await initializeGameState();
-                }
-            } catch (error) {
-                console.error('❌ Fetch error:', error);
-            }
-        }
-
-        async function initializeGameState() {
-            var initialState = {
-                turn: 0,
-                maxTurns: 5,
-                gameOver: false,
-                bulletPosition: Math.floor(Math.random() * 6),
-                history: [],
-                selectedChamber: -1,
-                removedChambers: [],
-                stats: { wins: 0, loses: 0, total: 0 },
-                playerCount: 1,
-                lastUpdatedBy: playerId
-            };
-
-            try {
-                var result = await supabaseClient
-                    .from('game_state')
-                    .upsert({
-                        id: '1',
-                        state: initialState,
-                        updated_at: new Date().toISOString()
-                    });
-
-                if (result.error) {
-                    console.error('❌ Init error:', result.error);
-                    applyState(initialState);
-                } else {
-                    applyState(initialState);
-                }
-            } catch (error) {
-                console.error('❌ Init error:', error);
-                applyState(initialState);
-            }
-        }
-
-        async function updateCloudState() {
-            if (isSyncing) return;
-            isSyncing = true;
-
-            try {
-                var stateToSave = {
-                    ...gameState,
-                    lastUpdatedBy: playerId,
-                    timestamp: Date.now()
-                };
-
-                var result = await supabaseClient
-                    .from('game_state')
-                    .upsert({
-                        id: '1',
-                        state: stateToSave,
-                        updated_at: new Date().toISOString()
-                    });
-
-                if (result.error) {
-                    console.error('❌ Update error:', result.error);
-                }
-            } catch (error) {
-                console.error('❌ Update error:', error);
-            } finally {
-                isSyncing = false;
-            }
-        }
-
         function applyState(state) {
             if (!state) return;
-            var stateChanged = JSON.stringify(gameState) !== JSON.stringify(state);
-            if (!stateChanged) return;
-
             gameState = {
                 ...state,
                 maxTurns: state.maxTurns || 5
             };
-
             renderCylinder();
             updateUI();
             updateRemainingInfo();
             updateHistory();
             updateStats();
             updateSelectedInfoBasedOnState();
-            document.getElementById('playerCount').textContent = state.playerCount || 1;
+            document.getElementById('playerCount').textContent = (connections.length || 0) + 1;
         }
 
-        // ====== MAIN ======
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM loaded');
-            
-            document.getElementById('fireBtn').addEventListener('click', fire);
-            document.getElementById('resetBtn').addEventListener('click', resetGame);
-            document.getElementById('syncBtn').addEventListener('click', function() {
-                if (supabaseClient) {
-                    fetchState();
-                    updateSelectedInfo('🔄 Đã đồng bộ!', '#667eea');
+        // ====== SYNC ======
+        function syncState() {
+            broadcastState();
+            updateSelectedInfo('🔄 Đã đồng bộ!', '#667eea');
+            setTimeout(function() {
+                updateSelectedInfoBasedOnState();
+            }, 1500);
+        }
+
+        // ====== COPY ID ======
+        function copyId() {
+            var id = document.getElementById('myPeerId').textContent;
+            if (id && id !== 'Đang tạo...') {
+                navigator.clipboard.writeText(id).then(function() {
+                    updateSelectedInfo('✅ Đã copy ID!', '#6bcb77');
                     setTimeout(function() {
                         updateSelectedInfoBasedOnState();
                     }, 1500);
+                }).catch(function() {
+                    // Fallback
+                    var textarea = document.createElement('textarea');
+                    textarea.value = id;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    updateSelectedInfo('✅ Đã copy ID!', '#6bcb77');
+                    setTimeout(function() {
+                        updateSelectedInfoBasedOnState();
+                    }, 1500);
+                });
+            }
+        }
+
+        // ====== INIT ======
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM loaded');
+            
+            // Khởi tạo game
+            gameState.bulletPosition = Math.floor(Math.random() * 6);
+            renderCylinder();
+            updateUI();
+            updateRemainingInfo();
+            updateHistory();
+            updateStats();
+            updateSelectedInfo('👆 Chọn ô và nhấn BẮN', '#ff6b6b');
+
+            // Khởi tạo PeerJS
+            initPeer();
+
+            // Event listeners
+            document.getElementById('fireBtn').addEventListener('click', fire);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('syncBtn').addEventListener('click', syncState);
+            document.getElementById('connectBtn').addEventListener('click', function() {
+                var targetId = document.getElementById('targetPeerId').value.trim();
+                connectToPeer(targetId);
+            });
+            document.getElementById('copyIdBtn').addEventListener('click', copyId);
+
+            // Enter key for connect
+            document.getElementById('targetPeerId').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('connectBtn').click();
                 }
             });
 
-            // Load Supabase
-            waitForSupabase().then(function(supabase) {
-                if (supabase) {
-                    console.log('✅ Supabase loaded');
-                    initSupabase(supabase);
-                } else {
-                    console.warn('⚠️ Supabase not loaded, running in local mode');
-                    gameState.bulletPosition = Math.floor(Math.random() * 6);
-                    renderCylinder();
-                    updateUI();
-                    updateRemainingInfo();
-                    updateHistory();
-                    updateStats();
-                    updateSelectedInfo('📡 Local mode - Chọn ô để chơi', '#ffd93d');
-                    document.getElementById('connectionStatus').textContent = '⚠️ Local mode (không đồng bộ)';
-                    document.getElementById('connectionStatus').className = 'connection-status disconnected';
-                }
-            });
-
-            console.log('🎯 Russian Roulette - Ready');
-            console.log('👤 Player ID:', playerId);
+            console.log('🎯 Russian Roulette - P2P Online Ready');
         });
     </script>
 </body>
