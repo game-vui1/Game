@@ -967,8 +967,8 @@
                     </div>
                     <div class="chat-messages" id="chatMessages"></div>
                     <div class="chat-input">
-                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." maxlength="100">
-                        <button id="sendBtn">Gửi</button>
+                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." maxlength="100" disabled>
+                        <button id="sendBtn" disabled>Gửi</button>
                     </div>
                 </div>
             </div>
@@ -1153,80 +1153,56 @@
                 });
             }
 
-            // ===== CHAT FIX - DÙNG on('value') =====
             listenToChat() {
-                // Xóa listener cũ nếu có
                 if (this.chatListener) {
                     this.chatListener.off();
                     this.chatListener = null;
                 }
                 
-                // Tạo query lấy 50 tin nhắn gần nhất
                 const messagesQuery = query(MESSAGES_REF, orderByChild('timestamp'), limitToLast(50));
                 this.chatListener = messagesQuery;
                 
-                // Lắng nghe thay đổi - dùng on('value')
                 onValue(messagesQuery, (snapshot) => {
                     const data = snapshot.val();
                     const container = document.getElementById('chatMessages');
                     
                     if (!data) {
-                        // Hiển thị tin nhắn chào nếu chưa có tin nhắn
-                        if (container.children.length === 0) {
-                            const welcome = document.createElement('div');
-                            welcome.className = 'message system';
-                            welcome.textContent = '💬 Chat không cần đăng nhập!';
-                            container.appendChild(welcome);
-                        }
+                        container.innerHTML = '';
+                        const welcome = document.createElement('div');
+                        welcome.className = 'message system';
+                        welcome.textContent = '💬 Chat không cần đăng nhập!';
+                        container.appendChild(welcome);
                         return;
                     }
                     
-                    // Chuyển object thành array và sắp xếp
                     const messages = Object.keys(data).map(key => ({
                         id: key,
                         ...data[key]
-                    })).sort((a, b) => a.timestamp - b.timestamp);
+                    })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                     
-                    // Render tin nhắn
-                    this.renderChatMessages(messages);
+                    container.innerHTML = '';
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.setAttribute('data-msg-id', msg.id);
+                        
+                        if (msg.type === 'system') {
+                            div.className = 'message system';
+                            div.textContent = msg.text;
+                        } else {
+                            const user = msg.user || 'Anonymous';
+                            const isSelf = user === (this.currentUser?.displayName || this.currentUser?.email || 'Anonymous');
+                            div.className = `message ${isSelf ? 'self-msg' : 'user-msg'}`;
+                            const time = new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                            div.innerHTML = `
+                                <span class="msg-user">${user}</span>
+                                <span class="msg-text">${msg.text}</span>
+                                <span class="msg-time">${time}</span>
+                            `;
+                        }
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
                 });
-            }
-
-            renderChatMessages(messages) {
-                const container = document.getElementById('chatMessages');
-                container.innerHTML = '';
-                
-                if (!messages || messages.length === 0) {
-                    const welcome = document.createElement('div');
-                    welcome.className = 'message system';
-                    welcome.textContent = '💬 Chat không cần đăng nhập!';
-                    container.appendChild(welcome);
-                    return;
-                }
-                
-                messages.forEach(msg => {
-                    const div = document.createElement('div');
-                    div.setAttribute('data-msg-id', msg.id);
-                    
-                    if (msg.type === 'system') {
-                        div.className = 'message system';
-                        div.textContent = msg.text;
-                    } else {
-                        const user = msg.user || 'Anonymous';
-                        const isSelf = user === (this.currentUser?.displayName || this.currentUser?.email || 'Anonymous');
-                        div.className = `message ${isSelf ? 'self-msg' : 'user-msg'}`;
-                        const time = new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                        div.innerHTML = `
-                            <span class="msg-user">${user}</span>
-                            <span class="msg-text">${msg.text}</span>
-                            <span class="msg-time">${time}</span>
-                        `;
-                    }
-                    container.appendChild(div);
-                });
-                
-                // Cuộn xuống tin nhắn mới nhất
-                container.scrollTop = container.scrollHeight;
             }
 
             updateGameState() {
@@ -1492,7 +1468,6 @@
                 sound.play('click');
             }
 
-            // ===== LOGIC BẮN - SỐNG SÓT QUA 5 LƯỢT MỚI THẮNG =====
             fire() {
                 if (!this.isHost) {
                     alert('⚠️ Chỉ Host (admin1@game.com) mới được bắn!');
@@ -1515,7 +1490,6 @@
                 this.selectedChamber = -1;
 
                 if (hit) {
-                    // TRÚNG ĐẠN → THUA (kể cả lượt 5)
                     sound.play('no');
                     this.gameOver = true;
                     this.stats.loses++;
@@ -1526,7 +1500,6 @@
                         this.processBetResult(false);
                     }
                 } else {
-                    // AN TOÀN
                     sound.play('tach');
                     this.addChatMessage('system', `✅ ${who} ô ${index + 1} an toàn! (Lượt ${this.turn}/${this.maxTurns})`);
 
@@ -1534,9 +1507,7 @@
                         this.processBetResult(true);
                     }
 
-                    // KIỂM TRA ĐÃ SỐNG SÓT QUA 5 LƯỢT CHƯA
                     if (this.turn >= this.maxTurns) {
-                        // ĐÃ SỐNG SÓT 5 LƯỢT → THẮNG
                         sound.play('win');
                         this.gameOver = true;
                         this.stats.wins++;
@@ -1549,7 +1520,6 @@
                         this.addChatMessage('system', `🎉 ${who} CHIẾN THẮNG! Sống sót ${this.maxTurns} lượt! Nhận ${reward.toLocaleString()}đ thưởng!`);
                         this.updateBalance();
                     } else {
-                        // DI CHUYỂN ĐẠN ĐẾN Ô KHÁC
                         const remaining = this.getRemainingChambers();
                         if (remaining.length > 0) {
                             let newPos;
@@ -1800,6 +1770,7 @@
                 userAvatar.textContent = (user.displayName || user.email || 'U')[0].toUpperCase();
                 chatInput.disabled = false;
                 sendBtn.disabled = false;
+                chatInput.placeholder = 'Nhập tin nhắn...';
                 
                 game.setUser(user);
                 game.loadUserData(user.uid);
@@ -1818,8 +1789,9 @@
                 document.getElementById('fireBtn').disabled = true;
                 document.getElementById('betBtn').disabled = true;
                 resetBtn.disabled = true;
-                chatInput.disabled = false;
-                sendBtn.disabled = false;
+                chatInput.disabled = true;
+                sendBtn.disabled = true;
+                chatInput.placeholder = 'Vui lòng đăng nhập...';
             }
         });
 
@@ -1842,21 +1814,77 @@
 
         function sendChatMessage() {
             const text = chatInput.value.trim();
-            if (!text) return;
+            if (!text) {
+                showToast('⚠️ Vui lòng nhập tin nhắn!', 'error');
+                return;
+            }
+            if (!game.currentUser) {
+                showToast('⚠️ Vui lòng đăng nhập!', 'error');
+                loginBtn.click();
+                return;
+            }
+            
             const user = game.currentUser?.displayName || game.currentUser?.email || 'Anonymous';
+            
             push(MESSAGES_REF, {
                 type: 'user',
                 text: text,
                 user: user,
                 timestamp: Date.now()
+            }).then(() => {
+                chatInput.value = '';
+                sound.play('click');
+            }).catch((error) => {
+                console.error('Lỗi gửi tin nhắn:', error);
+                showToast('❌ Không thể gửi tin nhắn!', 'error');
             });
-            chatInput.value = '';
-            sound.play('click');
         }
 
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'error' ? '#ef4444' : '#10b981'};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 600;
+                z-index: 9999;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideUp 0.3s ease;
+                max-width: 90%;
+                text-align: center;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Thêm CSS cho toast
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Gắn sự kiện gửi tin nhắn
         sendBtn.addEventListener('click', sendChatMessage);
         chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+            }
         });
 
         // ============================================================
@@ -1985,6 +2013,7 @@
         console.log('👑 Host: admin1@game.com');
         console.log('🔄 Băng đạn và chat đã được đồng bộ realtime!');
         console.log('🎯 Luật: Sống sót qua 5 lượt là THẮNG!');
+        console.log('💬 Chat đã sẵn sàng!');
     </script>
 </body>
 </html>
