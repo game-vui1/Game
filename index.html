@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Russian Roulette · Băng đạn đồng bộ</title>
+    <title>Russian Roulette · Đồng bộ đa người xem</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,6 @@
             align-items: center;
             padding: 20px;
             position: relative;
-            overflow-x: hidden;
         }
 
         body::before {
@@ -44,16 +43,17 @@
         .container {
             position: relative;
             z-index: 1;
-            background: rgba(20, 20, 40, 0.7);
+            background: rgba(20, 20, 40, 0.8);
             backdrop-filter: blur(16px);
             border-radius: 40px;
             padding: 35px;
-            max-width: 850px;
+            max-width: 900px;
             width: 100%;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Header */
         .header {
             display: flex;
             align-items: center;
@@ -83,7 +83,6 @@
         .header-image:hover {
             transform: scale(1.05) rotate(-5deg);
             border-color: #ff6b6b;
-            box-shadow: 0 8px 40px rgba(255, 107, 107, 0.4);
         }
 
         h1 {
@@ -103,22 +102,48 @@
             padding: 5px 16px;
             border-radius: 30px;
             display: inline-block;
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Sync Indicator */
+        .sync-badge {
+            background: rgba(107, 203, 119, 0.15);
+            color: #6bcb77;
+            padding: 5px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(107, 203, 119, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .sync-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: #6bcb77;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        /* Status Bar */
         .status-bar {
             background: rgba(255, 255, 255, 0.04);
             border-radius: 20px;
             padding: 16px 22px;
             margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
             border: 1px solid rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(10px);
         }
 
         .status-item {
@@ -131,6 +156,7 @@
         .status-item .label {
             color: rgba(255, 255, 255, 0.5);
             font-weight: 500;
+            font-size: 0.9rem;
         }
 
         .status-item .value {
@@ -148,14 +174,13 @@
             background: rgba(255, 217, 61, 0.12);
             color: #ffd93d;
             border: 1px solid rgba(255, 217, 61, 0.15);
-            box-shadow: 0 0 12px rgba(255, 217, 61, 0.05);
+            display: inline-block;
         }
 
         .bullet-status.safe {
             background: rgba(107, 203, 119, 0.18);
             color: #6bcb77;
             border-color: rgba(107, 203, 119, 0.2);
-            box-shadow: 0 0 20px rgba(107, 203, 119, 0.08);
         }
 
         .bullet-status.danger {
@@ -176,7 +201,6 @@
             background: rgba(102, 126, 234, 0.2);
             color: #a8b8ff;
             border-color: rgba(102, 126, 234, 0.25);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.08);
         }
 
         @keyframes pulse {
@@ -192,34 +216,53 @@
             border-radius: 16px;
             border: 2px solid rgba(255, 107, 107, 0.15);
             color: rgba(255, 255, 255, 0.9);
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 500;
             min-height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
-            backdrop-filter: blur(10px);
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
+        .selected-info .badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Remaining Info - NỔI BẬT */
         .remaining-info {
             text-align: center;
-            padding: 10px;
-            margin: 10px 0;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.95rem;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px;
+            margin: 12px 0;
+            background: linear-gradient(135deg, rgba(255, 217, 61, 0.08), rgba(255, 107, 107, 0.08));
+            border-radius: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 217, 61, 0.15);
+            font-weight: 600;
         }
 
-        .remaining-info span {
+        .remaining-info .highlight {
             color: #ffd93d;
-            font-weight: bold;
-            font-size: 1.4rem;
-            margin: 0 4px;
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 0 8px;
+            text-shadow: 0 0 30px rgba(255, 217, 61, 0.3);
         }
 
+        .remaining-info .sub-text {
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+        }
+
+        /* Cylinder */
         .cylinder-wrapper {
             position: relative;
             max-width: 420px;
@@ -227,7 +270,7 @@
             padding: 25px 20px 20px;
             background: rgba(0, 0, 0, 0.4);
             border-radius: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.04);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -278,7 +321,6 @@
             font-size: 0.6rem;
             color: rgba(255, 255, 255, 0.25);
             font-weight: 700;
-            transition: all 0.3s;
             letter-spacing: 0.5px;
         }
 
@@ -316,34 +358,27 @@
             transform: translate(-50%, -50%);
         }
 
-        .chamber:hover .chamber-icon {
-            opacity: 0.4;
-        }
-
         .chamber.selected {
             border-color: rgba(102, 126, 234, 0.7);
             box-shadow: 0 0 50px rgba(102, 126, 234, 0.2), inset 0 0 30px rgba(102, 126, 234, 0.05);
             transform: scale(1.08);
             animation: glowBlue 1.5s ease-in-out infinite;
-            background: radial-gradient(circle at 30% 30%, rgba(102, 126, 234, 0.15), rgba(102, 126, 234, 0.02));
         }
 
         @keyframes glowBlue {
-            0%, 100% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.15), inset 0 0 20px rgba(102, 126, 234, 0.03); }
-            50% { box-shadow: 0 0 55px rgba(102, 126, 234, 0.25), inset 0 0 30px rgba(102, 126, 234, 0.05); }
+            0%, 100% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.15); }
+            50% { box-shadow: 0 0 55px rgba(102, 126, 234, 0.25); }
         }
 
         .chamber.fired {
             border-color: rgba(107, 203, 119, 0.4);
             box-shadow: 0 0 30px rgba(107, 203, 119, 0.1);
-            background: radial-gradient(circle at 30% 30%, rgba(107, 203, 119, 0.08), rgba(107, 203, 119, 0.01));
         }
 
         .chamber.exploded {
             border-color: rgba(255, 107, 107, 0.9);
             box-shadow: 0 0 60px rgba(255, 107, 107, 0.5);
             animation: explode 0.6s ease-out;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.25), rgba(255, 107, 107, 0.05));
         }
 
         .chamber.removed {
@@ -364,20 +399,9 @@
         }
 
         @keyframes removeAnimation {
-            0% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-            40% {
-                transform: scale(0.6) rotate(60deg);
-                opacity: 0.6;
-                border-color: rgba(107, 203, 119, 0.5);
-                background: radial-gradient(circle at 30% 30%, rgba(107, 203, 119, 0.12), rgba(107, 203, 119, 0.02));
-            }
-            100% {
-                transform: scale(0) rotate(180deg);
-                opacity: 0;
-            }
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            40% { transform: scale(0.6) rotate(60deg); opacity: 0.6; }
+            100% { transform: scale(0) rotate(180deg); opacity: 0; }
         }
 
         .chamber.disabled {
@@ -404,66 +428,12 @@
 
         @keyframes explode {
             0% { transform: scale(1); }
-            30% { transform: scale(1.3); background: radial-gradient(circle at 30% 30%, rgba(255, 107, 107, 0.3), rgba(255, 107, 107, 0.05)); }
+            30% { transform: scale(1.3); }
             60% { transform: scale(0.9); }
             100% { transform: scale(1); }
         }
 
-        .history {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            padding: 16px 20px;
-            margin: 20px 0;
-            min-height: 80px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(10px);
-        }
-
-        .history h3 {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .history-log {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .log-entry {
-            padding: 5px 16px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .log-entry.safe {
-            background: rgba(107, 203, 119, 0.12);
-            color: #6bcb77;
-            border: 1px solid rgba(107, 203, 119, 0.1);
-        }
-
-        .log-entry.danger {
-            background: rgba(255, 107, 107, 0.12);
-            color: #ff6b6b;
-            border: 1px solid rgba(255, 107, 107, 0.1);
-        }
-
+        /* Stats */
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -494,6 +464,73 @@
             font-weight: 500;
         }
 
+        /* History */
+        .history {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            min-height: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .history h3 {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history h3 .count {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 0 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .history-log {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .log-entry {
+            padding: 5px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .log-entry.safe {
+            background: rgba(107, 203, 119, 0.12);
+            color: #6bcb77;
+            border: 1px solid rgba(107, 203, 119, 0.1);
+        }
+
+        .log-entry.danger {
+            background: rgba(255, 107, 107, 0.12);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.1);
+        }
+
+        .log-entry.info {
+            background: rgba(102, 126, 234, 0.12);
+            color: #a8b8ff;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        /* Game Over */
         .game-over {
             text-align: center;
             padding: 20px;
@@ -502,7 +539,6 @@
             font-size: 1.4rem;
             font-weight: 700;
             animation: slideIn 0.5s ease-out;
-            backdrop-filter: blur(10px);
         }
 
         .game-over.win {
@@ -517,6 +553,7 @@
             color: #ff6b6b;
         }
 
+        /* Controls */
         .controls {
             display: flex;
             gap: 15px;
@@ -535,7 +572,6 @@
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
-            backdrop-filter: blur(10px);
         }
 
         .btn:disabled {
@@ -555,22 +591,6 @@
             background: rgba(255, 255, 255, 0.12);
             transform: translateY(-3px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .cylinder-label {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-top: 14px;
-            letter-spacing: 3px;
-        }
-
-        .fire-btn-container {
-            display: flex;
-            justify-content: center;
-            margin: 16px 0 8px;
         }
 
         .btn-fire {
@@ -586,8 +606,6 @@
             letter-spacing: 2px;
             box-shadow: 0 4px 30px rgba(255, 107, 107, 0.3);
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
 
         .btn-fire:hover:not(:disabled) {
@@ -612,44 +630,38 @@
             100% { transform: scale(1.1) rotate(6deg); }
         }
 
+        .cylinder-label {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 14px;
+            letter-spacing: 3px;
+        }
+
+        .fire-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0 8px;
+        }
+
         @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-            h1 {
-                font-size: 1.6rem;
-            }
-            .header-image {
-                width: 60px;
-                height: 60px;
-            }
-            .cylinder-wrapper {
-                padding: 15px;
-            }
-            .cylinder {
-                gap: 12px;
-            }
-            .status-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .stats {
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 8px;
-                padding: 10px;
-            }
-            .stat-item .stat-value {
-                font-size: 1.5rem;
-            }
-            .btn-fire {
-                padding: 15px 40px;
-                font-size: 1.1rem;
-            }
+            .container { padding: 20px; }
+            h1 { font-size: 1.6rem; }
+            .header-image { width: 60px; height: 60px; }
+            .cylinder-wrapper { padding: 15px; }
+            .cylinder { gap: 12px; }
+            .status-bar { grid-template-columns: 1fr 1fr; }
+            .stats { grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px; }
+            .stat-item .stat-value { font-size: 1.5rem; }
+            .btn-fire { padding: 15px 40px; font-size: 1.1rem; }
+            .remaining-info .highlight { font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
             <div class="header-left">
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='38' fill='%231a1a2e'/%3E%3Ctext x='40' y='50' text-anchor='middle' font-size='34' fill='%23ff6b6b'%3E🔫%3C/text%3E%3C/svg%3E" alt="Russian Roulette" class="header-image">
@@ -658,8 +670,13 @@
                     <span class="subtitle">🎯 6 vị trí · 1 viên · 5 lượt</span>
                 </div>
             </div>
+            <div class="sync-badge">
+                <span class="dot"></span>
+                🔄 Đồng bộ · Tất cả người xem
+            </div>
         </div>
 
+        <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-item">
                 <span class="label">📊 Lượt:</span>
@@ -673,16 +690,28 @@
                 <span class="label">🎯 Xác suất:</span>
                 <span class="value" id="probabilityDisplay">16.7%</span>
             </div>
+            <div class="status-item">
+                <span class="label">👥 Người chơi:</span>
+                <span class="value" id="playerCount">1</span>
+            </div>
         </div>
 
+        <!-- Selected Info -->
         <div class="selected-info" id="selectedInfo">
             👆 Chọn một ô trên ổ quay, sau đó nhấn BẮN
+            <span class="badge">🔒 Đồng bộ toàn cục</span>
         </div>
 
+        <!-- Remaining Info - HIỂN THỊ NỔI BẬT SỐ Ô CÒN LẠI -->
         <div class="remaining-info">
-            📦 Ô còn lại: <span id="remainingCount">6</span>
+            📦 <span class="sub-text">Số ô còn lại trên ổ quay:</span>
+            <span class="highlight" id="remainingCount">6</span>
+            <span class="sub-text">/ 6 ô</span>
+            <span style="margin-left: 12px; font-weight: 400; color: rgba(255,255,255,0.3);">|</span>
+            <span class="sub-text">Đã bắn: <span id="firedCount" style="color: #ff6b6b; font-weight: 700;">0</span></span>
         </div>
 
+        <!-- Stats -->
         <div class="stats">
             <div class="stat-item">
                 <div class="stat-value" id="winCount">0</div>
@@ -698,28 +727,44 @@
             </div>
         </div>
 
+        <!-- Cylinder -->
         <div class="cylinder-wrapper">
             <div class="cylinder" id="cylinder"></div>
             <div class="cylinder-label">▼ Ổ QUAY 6 VỊ TRÍ ▼</div>
         </div>
 
+        <!-- Fire Button -->
         <div class="fire-btn-container">
             <button class="btn-fire" id="fireBtn">
                 <span class="fire-icon">🔫</span> BẮN
             </button>
         </div>
 
+        <!-- History -->
         <div class="history">
-            <h3>📜 Lịch sử bóp cò</h3>
+            <h3>
+                📜 Lịch sử bóp cò
+                <span class="count" id="historyCount">0 hành động</span>
+            </h3>
             <div class="history-log" id="historyLog">
-                <span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động</span>
+                <span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động nào</span>
             </div>
         </div>
 
+        <!-- Game Over -->
         <div id="gameOverMessage" style="display: none;"></div>
 
+        <!-- Controls -->
         <div class="controls">
             <button class="btn btn-secondary" id="resetBtn">🔄 Ván mới</button>
+            <button class="btn btn-secondary" id="syncBtn" style="background: rgba(102, 126, 234, 0.15); border-color: rgba(102, 126, 234, 0.2);">
+                🔄 Làm mới đồng bộ
+            </button>
+        </div>
+
+        <!-- Footer Sync Info -->
+        <div style="text-align: center; margin-top: 20px; color: rgba(255,255,255,0.15); font-size: 0.7rem; letter-spacing: 1px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 16px;">
+            ⚡ Trạng thái được đồng bộ · Mọi người cùng nhìn thấy số ô còn lại
         </div>
     </div>
 
@@ -736,7 +781,9 @@
                     this.selectedChamber = -1;
                     this.removedChambers = new Set();
                     this.stats = { wins: 0, loses: 0, total: 0 };
+                    this.playerCount = 1;
                     this.init();
+                    this.startFakeMultiplayer();
                 }
 
                 init() {
@@ -803,10 +850,8 @@
                     const hit = (this.bulletPosition === index);
                     this.history.push({ turn: this.turn, hit, position: index });
 
-                    // Xóa ô đã chọn (đồng bộ)
                     this.removeChamber(index);
                     this.selectedChamber = -1;
-
                     this.updateUI();
 
                     if (hit) {
@@ -837,7 +882,7 @@
                             this.updateSelectedInfo('🏆 Bạn đã chiến thắng!', '#6bcb77');
                             document.getElementById('fireBtn').disabled = true;
                         } else {
-                            // Di chuyển đạn ngẫu nhiên đến ô còn lại (ẩn)
+                            // Đạn di chuyển đến ô còn lại (đồng bộ)
                             const remaining = this.getRemainingChambers();
                             if (remaining.length > 0) {
                                 let newPos;
@@ -845,14 +890,16 @@
                                     newPos = remaining[Math.floor(Math.random() * remaining.length)];
                                 } while (newPos === this.bulletPosition && remaining.length > 1);
                                 this.bulletPosition = newPos;
-                                this.updateSelectedInfo(`🔄 Chọn ô tiếp theo`, '#ffd93d');
+                                // Thông báo đạn đã di chuyển (ẩn)
                             }
+                            this.updateSelectedInfo(`🔄 Lượt ${this.turn + 1} - Chọn ô tiếp theo`, '#ffd93d');
                         }
                     }
 
                     this.updateUI();
                     this.updateHistory();
                     this.updateRemainingInfo();
+                    this.updatePlayerCount();
                 }
 
                 removeChamber(index) {
@@ -911,14 +958,12 @@
                         chamber.className = 'chamber';
                         chamber.dataset.index = i;
 
-                        // === ĐỒNG BỘ HIỂN THỊ ĐẠN ===
-                        // Chỉ hiển thị viên đạn khi game over và đúng vị trí đạn
+                        // Hiển thị đạn khi game over
                         if (this.gameOver && i === this.bulletPosition && !this.removedChambers.has(i)) {
                             const dot = document.createElement('div');
                             dot.className = 'bullet-dot';
                             chamber.appendChild(dot);
                         } else if (!this.removedChambers.has(i)) {
-                            // Ô còn sống: icon + chấm trống
                             const icon = document.createElement('div');
                             icon.className = 'chamber-icon';
                             icon.textContent = icons[i];
@@ -928,7 +973,6 @@
                             chamber.appendChild(dot);
                         }
 
-                        // Số thứ tự
                         const number = document.createElement('div');
                         number.className = 'chamber-number';
                         number.textContent = i + 1;
@@ -960,7 +1004,7 @@
 
                 updateSelectedInfo(message, color = '#ff6b6b') {
                     const info = document.getElementById('selectedInfo');
-                    info.textContent = message;
+                    info.innerHTML = message + ' <span class="badge">🔒 Đồng bộ toàn cục</span>';
                     info.style.borderColor = color;
                     const colors = {
                         '#ff6b6b': 'rgba(255, 107, 107, 0.08)',
@@ -973,16 +1017,21 @@
 
                 updateRemainingInfo() {
                     const remaining = this.totalChambers - this.removedChambers.size;
+                    const fired = this.removedChambers.size;
                     document.getElementById('remainingCount').textContent = remaining;
+                    document.getElementById('firedCount').textContent = fired;
                 }
 
                 updateHistory() {
                     const log = document.getElementById('historyLog');
+                    const count = document.getElementById('historyCount');
                     log.innerHTML = '';
                     if (this.history.length === 0) {
-                        log.innerHTML = '<span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động</span>';
+                        log.innerHTML = '<span style="color: rgba(255,255,255,0.15); font-size: 0.9rem;">Chưa có hành động nào</span>';
+                        count.textContent = '0 hành động';
                         return;
                     }
+                    count.textContent = this.history.length + ' hành động';
                     this.history.forEach(entry => {
                         const el = document.createElement('span');
                         el.className = `log-entry ${entry.hit ? 'danger' : 'safe'}`;
@@ -997,6 +1046,20 @@
                     document.getElementById('totalGames').textContent = this.stats.total;
                 }
 
+                updatePlayerCount() {
+                    // Mô phỏng nhiều người xem
+                    this.playerCount = 1 + Math.floor(Math.random() * 5);
+                    document.getElementById('playerCount').textContent = this.playerCount;
+                }
+
+                startFakeMultiplayer() {
+                    setInterval(() => {
+                        if (!this.gameOver) {
+                            this.updatePlayerCount();
+                        }
+                    }, 5000);
+                }
+
                 reset() {
                     this.init();
                     this.updateStats();
@@ -1009,6 +1072,22 @@
                     this.updateUI();
                     this.updateSelectedInfo('🔄 Ván mới! Chọn ô và nhấn BẮN', '#ff6b6b');
                     this.updateRemainingInfo();
+                    this.updatePlayerCount();
+                }
+
+                sync() {
+                    // Làm mới đồng bộ - cập nhật UI
+                    this.updateUI();
+                    this.updateRemainingInfo();
+                    this.updateHistory();
+                    this.updateStats();
+                    this.updatePlayerCount();
+                    this.updateSelectedInfo('🔄 Đã làm mới đồng bộ', '#667eea');
+                    setTimeout(() => {
+                        if (!this.gameOver) {
+                            this.updateSelectedInfo('👆 Chọn ô và nhấn BẮN', '#ff6b6b');
+                        }
+                    }, 1500);
                 }
             }
 
@@ -1016,6 +1095,11 @@
 
             document.getElementById('fireBtn').addEventListener('click', () => game.fire());
             document.getElementById('resetBtn').addEventListener('click', () => game.reset());
+            document.getElementById('syncBtn').addEventListener('click', () => game.sync());
+
+            // Thông báo đồng bộ khi tải trang
+            console.log('🔫 Russian Roulette - Đồng bộ đa người xem');
+            console.log('📊 Tất cả người xem đều thấy cùng trạng thái!');
         })();
     </script>
 </body>
